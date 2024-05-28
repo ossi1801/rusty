@@ -14,13 +14,22 @@ fn main() {
     .add_systems(Startup, spawn_enemies)
     .add_systems(Update, player_movement)
     .add_systems(Update,confine_player_movement_screen)
+    .add_systems(Update, confine_player_movement_collisions) //static walls (enemys as test)
     .run();
 }
 
 #[derive(Component)]
 pub struct Player {}
 #[derive(Component)]
-pub struct Enemy {}
+pub struct Enemy {
+    x: f32,
+    y:f32,
+    w:f32,
+    h:f32,
+}
+#[derive(Component)]
+pub struct Collision {}
+
 
 
 pub fn spawn_player(
@@ -47,16 +56,15 @@ pub fn spawn_player(
         AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)),
         Player{},
     ));*/
-
-       commands.spawn(
-            (
-                SpriteBundle{
-                    transform: Transform::from_xyz(window.width()/2.0, window.height(), 0.0),
-                    texture: asset_server.load("sprites/velho.png"),
-                    ..default()
-                },
-                Player {},
-            ));
+    commands.spawn(
+        (
+            SpriteBundle{
+                transform: Transform::from_xyz(window.width()/2.0, window.height(), 0.0),
+                texture: asset_server.load("sprites/velho.png"),
+                ..default()
+            },
+            Player {},
+        ));
 
 }
 pub fn spawn_camera(
@@ -109,6 +117,7 @@ pub fn player_movement (
         transform.translation += direction* PLAYER_SPEED * time.delta_seconds();
     }
 }
+
 pub fn confine_player_movement_screen(
     mut player_query: Query<&mut Transform, With<Player>>,
     window_query: Query<&Window, With<PrimaryWindow>>,
@@ -142,6 +151,32 @@ pub fn confine_player_movement_screen(
         player_transform.translation = translation;
     }
 }
+
+pub fn confine_player_movement_collisions(
+mut player_query: Query<&mut Transform, With<Player>>,
+mut collision_query: Query<&Enemy, With<Collision>>,
+) {
+    if let Ok(mut player_transform) = player_query.get_single_mut() {
+
+        for collider in collision_query.iter_mut(){ 
+        //let collision_object = collision_query.get_single().unwrap();
+
+        let half_player_size = PLAYER_SIZE / 2.0; // 32.0
+        let mut translation = player_transform.translation;
+
+        if 
+        collider.x < translation.x + half_player_size &&
+        collider.x + collider.w > translation.x &&
+        collider.y < translation.y + half_player_size &&
+        collider.y + collider.h > translation.y
+        {
+            let tmp = player_transform.translation.z; // z uselss
+            player_transform.translation -= Vec3::new(collider.x-translation.x,collider.y-translation.y,tmp);
+        }
+    }
+}
+}
+
 //End player
 
 pub fn spawn_enemies(
@@ -161,7 +196,13 @@ pub fn spawn_enemies(
                 texture: asset_server.load("sprites/cannonball.png"),
                 ..default()
             },
-            Enemy {},
+            Enemy {
+                x: random_x,
+                y: random_y,
+                w: 32.0, //todo proper height and width values
+                h: 32.0              
+            },
+            Collision{}, // add collision to enemys  as well?
         ));
     }
 }
