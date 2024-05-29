@@ -1,14 +1,29 @@
 use bevy::{prelude::*};
 use bevy::window::PrimaryWindow;
 use rand::prelude::*;
+use bevy_pixel_camera::{
+    PixelCameraPlugin, PixelZoom, PixelViewport
+};
 
 pub const PLAYER_SPEED: f32 = 500.0;
 pub const PLAYER_SIZE: f32 = 64.0; // This is the player sprite size.
 pub const NUMBER_OF_ENEMIES: usize = 4;
+pub const SCALE:f32 = 2.0;
+pub const PLAY_AREA_SIZE_X: i32 = 320;
+pub const PLAY_AREA_SIZE_Y: i32 = 180;
 
 fn main() {
     App::new()
-    .add_plugins(DefaultPlugins)   
+    .add_plugins(DefaultPlugins.set(WindowPlugin{
+        primary_window: Some(Window{
+            title: "Wizard".into(),
+            name: Some("Wizard test".into()),
+            //resolution: (500., 300.).into(),
+            ..default()
+        }),
+        ..default()
+    }).set(ImagePlugin::default_nearest()))   
+    .add_plugins(PixelCameraPlugin)
     .add_systems(Startup, spawn_camera)
     .add_systems(Startup, spawn_player)
     .add_systems(Startup, spawn_enemies)
@@ -73,12 +88,17 @@ pub fn spawn_camera(
 ){
     let window: &Window = window_query.get_single().unwrap();
    
-    commands.spawn(       
+    commands.spawn((       
             Camera2dBundle{
-                transform: Transform::from_xyz(window.width()/2.0, window.height(), 0.0),
+                transform: Transform::from_xyz(window.width()/2.0, window.height(), 0.0),            
                 ..default()
-            }       
-        );
+            },
+            PixelZoom::FitSize {
+                width: PLAY_AREA_SIZE_X,
+                height:PLAY_AREA_SIZE_Y ,
+            },
+            PixelViewport,              
+        ));
 
 }
 
