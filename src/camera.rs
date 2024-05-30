@@ -9,7 +9,7 @@ impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(PixelCameraPlugin)
             .add_systems(Startup, spawn_camera)
-            .add_systems(PostStartup, camera_follow);
+            .add_systems(Update, camera_follow);
     }
 }
 
@@ -35,11 +35,11 @@ pub fn spawn_camera(mut commands: Commands, window_query: Query<&Window, With<Pr
     ));
 }
 pub fn camera_follow(
-    mut camera: Query<&mut Transform, With<MainCamera>>,
+    mut camera: Query<&mut Transform, (With<MainCamera>, Without<Player>)>,
     player: Query<&Transform, With<Player>>,
 ) {
     let mut cam = camera.single_mut();
     let p = &player.single();
     cam.translation.x = p.translation.x;
-    cam.translation.x = p.translation.x;
+    cam.translation.y = p.translation.y;
 }
