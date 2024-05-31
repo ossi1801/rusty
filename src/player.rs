@@ -1,10 +1,10 @@
-use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
+use bevy::{prelude::*, transform};
 
 use crate::camera::{PLAY_AREA_SIZE_X, PLAY_AREA_SIZE_Y};
 pub struct PlayerPlugin;
 
-pub const PLAYER_SIZE: f32 = 64.0; // This is the player sprite size.
+pub const PLAYER_SIZE: f32 = 32.0; // This is the player sprite size.
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
@@ -22,12 +22,21 @@ fn spawn_player(
     mut commands: Commands,
     window_query: Query<&Window, With<PrimaryWindow>>,
     asset_server: Res<AssetServer>,
+    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     let window: &Window = window_query.get_single().unwrap();
+    let layout =
+        TextureAtlasLayout::from_grid(Vec2::new(PLAYER_SIZE, PLAYER_SIZE), 2, 1, None, None);
+    let texture_atlas_layout = texture_atlas_layouts.add(layout);
+
     commands.spawn((
-        SpriteBundle {
+        SpriteSheetBundle {
+            texture: asset_server.load("sprites/spritesheet.png"), //default
+            atlas: TextureAtlas {
+                index: 0,
+                layout: texture_atlas_layout,
+            },
             transform: Transform::from_xyz(window.width() / 2.0, window.height(), 0.0),
-            texture: asset_server.load("sprites/velho.png"),
             ..default()
         },
         Player {},
@@ -37,11 +46,12 @@ fn spawn_player(
 //Player movement
 fn player_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
-    mut player_query: Query<&mut Transform, With<Player>>,
+    mut player_query: Query<(&mut Transform, &mut TextureAtlas), With<Player>>,
     time: Res<Time>,
     //  mut query: Query<(&AnimationIndices, &mut AnimationTimer, &mut TextureAtlas)>,
 ) {
-    if let Ok(mut transform) = player_query.get_single_mut() {
+    for (mut transform, mut textures) in player_query.iter_mut() {
+        //if let Ok(mut transform) = player_query.get_single_mut() {
         let mut direction: Vec3 = Vec3::new(0.0, 0.0, 0.0);
 
         if keyboard_input.pressed(KeyCode::ArrowLeft) || keyboard_input.pressed(KeyCode::KeyA) {
@@ -52,19 +62,18 @@ fn player_movement(
         }
         if keyboard_input.pressed(KeyCode::ArrowUp) || keyboard_input.pressed(KeyCode::KeyW) {
             direction += Vec3::new(0.0, 1.0, 0.0);
-
-            // for (indices, mut timer, mut spritesheet) in &mut query {
-            //     spritesheet.index = 23;
-            // }
+            textures.index = 1; //backside
         }
         if keyboard_input.pressed(KeyCode::ArrowDown) || keyboard_input.pressed(KeyCode::KeyS) {
             direction += Vec3::new(0.0, -1.0, 0.0);
+            textures.index = 0; //backside
         }
 
         if direction.length() > 0.0 {
             direction = direction.normalize();
         }
         transform.translation += direction * PLAYER_SPEED * time.delta_seconds();
+        //}
     }
 }
 
