@@ -26,7 +26,7 @@ fn spawn_player(
 ) {
     let window: &Window = window_query.get_single().unwrap();
     let layout =
-        TextureAtlasLayout::from_grid(Vec2::new(PLAYER_SIZE, PLAYER_SIZE), 2, 1, None, None);
+        TextureAtlasLayout::from_grid(Vec2::new(PLAYER_SIZE, PLAYER_SIZE), 4, 1, None, None);
     let texture_atlas_layout = texture_atlas_layouts.add(layout);
 
     commands.spawn((
@@ -56,17 +56,19 @@ fn player_movement(
 
         if keyboard_input.pressed(KeyCode::ArrowLeft) || keyboard_input.pressed(KeyCode::KeyA) {
             direction += Vec3::new(-1.0, 0.0, 0.0);
+            textures.index = 0;
         }
         if keyboard_input.pressed(KeyCode::ArrowRight) || keyboard_input.pressed(KeyCode::KeyD) {
             direction += Vec3::new(1.0, 0.0, 0.0);
+            textures.index = 2;
         }
         if keyboard_input.pressed(KeyCode::ArrowUp) || keyboard_input.pressed(KeyCode::KeyW) {
             direction += Vec3::new(0.0, 1.0, 0.0);
-            textures.index = 1; //backside
+            textures.index = 1;
         }
         if keyboard_input.pressed(KeyCode::ArrowDown) || keyboard_input.pressed(KeyCode::KeyS) {
             direction += Vec3::new(0.0, -1.0, 0.0);
-            textures.index = 0; //backside
+            textures.index = 3;
         }
 
         if direction.length() > 0.0 {
