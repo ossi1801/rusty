@@ -1,15 +1,15 @@
+use crate::player::player_movement;
+use crate::player::Player;
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy_pixel_camera::{PixelCameraPlugin, PixelViewport, PixelZoom};
-
-use crate::player::Player;
 pub struct CameraPlugin;
 
 impl Plugin for CameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(PixelCameraPlugin)
             .add_systems(Startup, spawn_camera)
-            .add_systems(Update, camera_follow);
+            .add_systems(Update, camera_follow.after(player_movement));
     }
 }
 

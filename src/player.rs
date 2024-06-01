@@ -44,7 +44,7 @@ fn spawn_player(
 }
 
 //Player movement
-fn player_movement(
+pub fn player_movement(
     keyboard_input: Res<ButtonInput<KeyCode>>,
     mut player_query: Query<(&mut Transform, &mut TextureAtlas), With<Player>>,
     time: Res<Time>,
