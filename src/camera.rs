@@ -13,8 +13,8 @@ impl Plugin for CameraPlugin {
     }
 }
 
-pub const PLAY_AREA_SIZE_X: i32 = 600;
-pub const PLAY_AREA_SIZE_Y: i32 = 300;
+pub const PLAY_AREA_SIZE_X: i32 = 600; //600
+pub const PLAY_AREA_SIZE_Y: i32 = 300; //300
 
 #[derive(Component, Debug)]
 pub struct MainCamera {}

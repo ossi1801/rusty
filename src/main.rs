@@ -1,17 +1,18 @@
+mod assets_loader;
 mod camera;
 mod player; //Tell rust what .rs file to scan;
-use camera::CameraPlugin;
-use player::{Player, PlayerPlugin}; //import from player file player plugin
-
+mod tiles;
+use assets_loader::{AssetLoaderPlugin, SceneAssets};
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
+use camera::CameraPlugin;
+use player::{Player, PlayerPlugin}; //import from player file player plugin
 use rand::prelude::*;
+use tiles::TilesBgrPlugin;
 
-pub const PLAYER_SIZE: f32 = 64.0; // This is the player sprite size.
+pub const PLAYER_SIZE: f32 = 32.0; // This is the player sprite size.
 pub const NUMBER_OF_ENEMIES: usize = 16;
 pub const SCALE: f32 = 2.0;
-pub const PLAY_AREA_SIZE_X: i32 = 600;
-pub const PLAY_AREA_SIZE_Y: i32 = 300;
 
 fn main() {
     App::new()
@@ -27,9 +28,11 @@ fn main() {
                 })
                 .set(ImagePlugin::default_nearest()),
         )
+        .add_plugins(AssetLoaderPlugin)
         .add_plugins(PlayerPlugin)
         .add_plugins(CameraPlugin)
-        .add_systems(Startup, spawn_enemies)
+        .add_plugins(TilesBgrPlugin)
+        .add_systems(PostStartup, spawn_enemies)
         .add_systems(Update, confine_player_movement_collisions) //static walls (enemys as test)
         .run();
 }

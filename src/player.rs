@@ -1,27 +1,29 @@
+use bevy::ecs::query;
 use bevy::window::PrimaryWindow;
 use bevy::{prelude::*, transform};
 
+use crate::assets_loader::SceneAssets;
 use crate::camera::{PLAY_AREA_SIZE_X, PLAY_AREA_SIZE_Y};
 pub struct PlayerPlugin;
-
-pub const PLAYER_SIZE: f32 = 32.0; // This is the player sprite size.
-
-impl Plugin for PlayerPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(Startup, spawn_player)
-            .add_systems(Update, player_movement);
-        //.add_systems(Update,confine_player_movement_screen)
-    }
-}
 
 #[derive(Component)]
 pub struct Player {}
 pub const PLAYER_SPEED: f32 = 500.0;
+pub const PLAYER_SIZE: f32 = 32.0; // This is the player sprite size.
+
+impl Plugin for PlayerPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(PostStartup, spawn_player)
+            .add_systems(Update, player_movement);
+        //   .add_systems(Update, player_projectile_controls.after(player_movement));
+        //.add_systems(Update,confine_player_movement_screen)
+    }
+}
 
 fn spawn_player(
     mut commands: Commands,
     window_query: Query<&Window, With<PrimaryWindow>>,
-    asset_server: Res<AssetServer>,
+    scene_assets: Res<SceneAssets>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     let window: &Window = window_query.get_single().unwrap();
@@ -31,7 +33,7 @@ fn spawn_player(
 
     commands.spawn((
         SpriteSheetBundle {
-            texture: asset_server.load("sprites/spritesheet.png"), //default
+            texture: scene_assets.player.clone(), //default
             atlas: TextureAtlas {
                 index: 0,
                 layout: texture_atlas_layout,
@@ -78,7 +80,7 @@ pub fn player_movement(
         //}
     }
 }
-
+//todo lock to playable area instead of "screen"
 fn confine_player_movement_screen(
     mut player_query: Query<&mut Transform, With<Player>>,
     window_query: Query<&Window, With<PrimaryWindow>>,
