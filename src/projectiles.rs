@@ -1,21 +1,20 @@
-use crate::player::PLAYER_SIZE;
+use crate::assets_loader::SceneAssets;
+use crate::player::{player_movement, Player, PLAYER_SIZE};
+use bevy::prelude::*;
 //Proejcttiles
 #[derive(Component, Debug)]
 pub struct Velocity {
     pub value: Vec3,
 }
-
 impl Velocity {
     pub fn new(value: Vec3) -> Self {
         Self { value }
     }
 }
-
 #[derive(Component, Debug)]
 pub struct Acceleration {
     pub value: Vec3,
 }
-
 impl Acceleration {
     pub fn new(value: Vec3) -> Self {
         Self { value }
@@ -42,10 +41,20 @@ pub struct MovingObjectBundle {
     pub collider: Collider,
     pub sprite: SpriteSheetBundle,
 }
-const PROJECTILE_SPEED: f32 = 50.0;
+const PROJECTILE_SPEED: f32 = 1500.0;
 const PROJECTILE_FORWARD_SPAWN_SCALAR: f32 = 7.5;
-const PROJECTILE_RADIUS: f32 = 1.0;
+const PROJECTILE_RADIUS: f32 = 0.25;
 
+pub struct ProjectilesPlugin;
+
+impl Plugin for ProjectilesPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Update, player_projectile_controls);
+    }
+}
+
+#[derive(Component, Debug)]
+pub struct PlayerProjecttile;
 fn player_projectile_controls(
     mut commands: Commands,
     query: Query<&Transform, With<Player>>,
@@ -62,7 +71,7 @@ fn player_projectile_controls(
         if keyboard_input.pressed(KeyCode::Space) {
             commands.spawn((
                 MovingObjectBundle {
-                    velocity: Velocity::new(-transform.forward() * PROJECTILE_SPEED),
+                    velocity: Velocity::new(-transform.up() * PROJECTILE_SPEED),
                     acceleration: Acceleration::new(Vec3::ZERO),
                     collider: Collider::new(PROJECTILE_RADIUS),
                     sprite: SpriteSheetBundle {
@@ -78,8 +87,20 @@ fn player_projectile_controls(
                         ..default()
                     },
                 },
-                //SpaceshipMissile,
+                PlayerProjecttile,
             ));
         }
+    }
+}
+
+pub struct MovementPlugin;
+impl Plugin for MovementPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(Update, update_position);
+    }
+}
+fn update_position(mut query: Query<(&Velocity, &mut Transform)>, time: Res<Time>) {
+    for (velocity, mut transform) in query.iter_mut() {
+        transform.translation += velocity.value * time.delta_seconds();
     }
 }

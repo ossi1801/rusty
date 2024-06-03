@@ -1,7 +1,4 @@
-use std::collections::btree_map::Range;
-
 use bevy::prelude::*;
-use rand::prelude::*;
 
 pub struct TilesBgrPlugin;
 impl Plugin for TilesBgrPlugin {
