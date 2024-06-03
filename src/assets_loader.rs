@@ -10,16 +10,16 @@ pub struct SceneAssets {
 }
 #[derive(Resource, Debug, Default)]
 pub struct SceneAssetsAtlas {
-    pub player: Handle<TextureAtlasLayout>,
-    //pub enemy: Handle<TextureAtlasLayout>,
-    // pub projectile: Handle<TextureAtlasLayout>,
+    pub player: Option<Handle<TextureAtlasLayout>>,
+    pub enemy: Option<Handle<TextureAtlasLayout>>,
+    pub projectile: Option<Handle<TextureAtlasLayout>>,
 }
-
 pub struct AssetLoaderPlugin;
 
 impl Plugin for AssetLoaderPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<SceneAssets>()
+            .init_resource::<SceneAssetsAtlas>()
             .add_systems(Startup, load_assets);
     }
 }
@@ -27,21 +27,20 @@ impl Plugin for AssetLoaderPlugin {
 fn load_assets(
     mut scene_assets: ResMut<SceneAssets>,
     asset_server: Res<AssetServer>,
-    // mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-    // mut h_atlas: Res<SceneAssetsAtlas>,
+    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    mut h_atlas: ResMut<SceneAssetsAtlas>,
 ) {
     *scene_assets = SceneAssets {
-        enemy: asset_server.load("sprites/spritesheet.png"),
         player: asset_server.load("sprites/spritesheet.png"),
+        enemy: asset_server.load("sprites/spritesheet.png"),
         projectile: asset_server.load("sprites/cannonball.png"),
     };
 
-    // let layout =
-    //     TextureAtlasLayout::from_grid(Vec2::new(PLAYER_SIZE, PLAYER_SIZE), 4, 1, None, None);
-    // let texture_atlas_layout = texture_atlas_layouts.add(layout);
-    // h_atlas.player = *texture_atlas_layout;
-    // // player: asset_server.load("sprites/spritesheet.png"),
-    // // projectile: asset_server.load("sprites/cannonball.png"),
+    //Texture atlasses
+    let layout =
+        TextureAtlasLayout::from_grid(Vec2::new(PLAYER_SIZE, PLAYER_SIZE), 4, 1, None, None);
+    let tal = texture_atlas_layouts.add(layout);
+    h_atlas.player = Some(tal);
 }
 
 // pub struct CharacterSheet {

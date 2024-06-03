@@ -2,7 +2,7 @@ use bevy::ecs::query;
 use bevy::window::PrimaryWindow;
 use bevy::{prelude::*, transform};
 
-use crate::assets_loader::SceneAssets;
+use crate::assets_loader::{SceneAssets, SceneAssetsAtlas};
 use crate::camera::{PLAY_AREA_SIZE_X, PLAY_AREA_SIZE_Y};
 pub struct PlayerPlugin;
 
@@ -24,19 +24,15 @@ fn spawn_player(
     mut commands: Commands,
     window_query: Query<&Window, With<PrimaryWindow>>,
     scene_assets: Res<SceneAssets>,
-    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    scene_atlasses: Res<SceneAssetsAtlas>,
 ) {
     let window: &Window = window_query.get_single().unwrap();
-    let layout =
-        TextureAtlasLayout::from_grid(Vec2::new(PLAYER_SIZE, PLAYER_SIZE), 4, 1, None, None);
-    let texture_atlas_layout = texture_atlas_layouts.add(layout);
-
     commands.spawn((
         SpriteSheetBundle {
-            texture: scene_assets.player.clone(), //default
+            texture: scene_assets.player.clone(),
             atlas: TextureAtlas {
                 index: 0,
-                layout: texture_atlas_layout,
+                layout: scene_atlasses.player.clone().unwrap(), //texture_atlas_layout,
             },
             transform: Transform::from_xyz(window.width() / 2.0, window.height(), 0.0),
             ..default()
