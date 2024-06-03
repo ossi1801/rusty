@@ -1,4 +1,4 @@
-use crate::assets_loader::SceneAssets;
+use crate::assets_loader::{SceneAssets, SceneAssetsAtlas};
 use crate::player::{player_movement, Player, PLAYER_SIZE};
 use bevy::prelude::*;
 //Proejcttiles
@@ -60,14 +60,9 @@ fn player_projectile_controls(
     query: Query<&Transform, With<Player>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     scene_assets: Res<SceneAssets>,
-    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    scene_atlasses: Res<SceneAssetsAtlas>,
 ) {
     if let Ok(transform) = query.get_single() {
-        //todo atlas from handle
-        let layout =
-            TextureAtlasLayout::from_grid(Vec2::new(PLAYER_SIZE, PLAYER_SIZE), 1, 1, None, None);
-        let texture_atlas_layout = texture_atlas_layouts.add(layout);
-
         if keyboard_input.pressed(KeyCode::Space) {
             commands.spawn((
                 MovingObjectBundle {
@@ -78,7 +73,7 @@ fn player_projectile_controls(
                         texture: scene_assets.projectile.clone(),
                         atlas: TextureAtlas {
                             index: 0,
-                            layout: texture_atlas_layout,
+                            layout: scene_atlasses.projectile.clone().unwrap(),
                         },
                         transform: Transform::from_translation(
                             transform.translation

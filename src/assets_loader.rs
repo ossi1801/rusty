@@ -1,6 +1,5 @@
 use crate::player::PLAYER_SIZE;
 use bevy::prelude::*;
-use bevy::prelude::*;
 
 #[derive(Resource, Debug, Default)]
 pub struct SceneAssets {

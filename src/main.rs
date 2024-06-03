@@ -2,15 +2,17 @@ use bevy::prelude::*;
 
 mod assets_loader;
 mod camera;
+mod debug;
 mod enemy;
 mod player; //Tell rust what .rs file to scan;
 mod projectiles;
 mod tiles;
 
-use assets_loader::{AssetLoaderPlugin, SceneAssets};
+use assets_loader::AssetLoaderPlugin;
 use camera::CameraPlugin;
+use debug::DebugPlugin;
 use enemy::EnemyPlugin;
-use player::{Player, PlayerPlugin, PLAYER_SIZE}; //import from player file player plugin
+use player::PlayerPlugin; //import from player file player plugin
 use projectiles::{MovementPlugin, ProjectilesPlugin};
 use tiles::TilesBgrPlugin;
 
@@ -30,6 +32,7 @@ fn main() {
                 })
                 .set(ImagePlugin::default_nearest()),
         )
+        .add_plugins(DebugPlugin)
         .add_plugins(AssetLoaderPlugin) //textures etc
         .add_plugins(PlayerPlugin) //player
         .add_plugins(EnemyPlugin)
