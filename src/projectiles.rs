@@ -1,6 +1,6 @@
 use crate::assets_loader::{SceneAssets, SceneAssetsAtlas};
-use crate::player::{player_movement, Player, PLAYER_SIZE};
-use bevy::prelude::*;
+use crate::player::{Player, PlayerDirection};
+use bevy::{prelude::*, transform};
 //Proejcttiles
 #[derive(Component, Debug)]
 pub struct Velocity {
@@ -57,16 +57,35 @@ impl Plugin for ProjectilesPlugin {
 pub struct PlayerProjecttile;
 fn player_projectile_controls(
     mut commands: Commands,
-    query: Query<&Transform, With<Player>>,
+    query: Query<(&Transform, &Player), With<Player>>,
     keyboard_input: Res<ButtonInput<KeyCode>>,
     scene_assets: Res<SceneAssets>,
     scene_atlasses: Res<SceneAssetsAtlas>,
 ) {
-    if let Ok(transform) = query.get_single() {
+    for (transform, player) in query.iter() {
         if keyboard_input.pressed(KeyCode::Space) {
+            info!("{:?}", player.direction);
+            let mut dir: Direction3d = transform.up();
+            let mut degr: f32 = 0.;
+            if player.direction == PlayerDirection::Left {
+                degr = 90.;
+                dir = transform.left();
+            }
+            if player.direction == PlayerDirection::Right {
+                degr = 0.;
+                dir = transform.right();
+            }
+            if player.direction == PlayerDirection::Up {
+                degr = 45.;
+                dir = transform.up();
+            }
+            if player.direction == PlayerDirection::Down {
+                degr = -45.;
+                dir = transform.down();
+            }
             commands.spawn((
                 MovingObjectBundle {
-                    velocity: Velocity::new(-transform.up() * PROJECTILE_SPEED),
+                    velocity: Velocity::new(dir * PROJECTILE_SPEED),
                     acceleration: Acceleration::new(Vec3::ZERO),
                     collider: Collider::new(PROJECTILE_RADIUS),
                     sprite: SpriteSheetBundle {
@@ -75,10 +94,12 @@ fn player_projectile_controls(
                             index: 0,
                             layout: scene_atlasses.projectile.clone().unwrap(),
                         },
-                        transform: Transform::from_translation(
-                            transform.translation
-                                + -transform.forward() * PROJECTILE_FORWARD_SPAWN_SCALAR,
-                        ),
+                        transform: Transform {
+                            translation: transform.translation
+                                + -dir * PROJECTILE_FORWARD_SPAWN_SCALAR,
+                            rotation: Quat::from_rotation_y(degr),
+                            scale: Vec3::new(1f32, 1f32, 1f32),
+                        },
                         ..default()
                     },
                 },
@@ -87,6 +108,8 @@ fn player_projectile_controls(
         }
     }
 }
+//TODO Chain keyboard input by storing them in a vector(?) tuple,
+// where 0 is key and 1 is time pressed  then iterate if last 3 or match combo do special attack?
 
 pub struct MovementPlugin;
 impl Plugin for MovementPlugin {

@@ -32,7 +32,7 @@ fn main() {
                 })
                 .set(ImagePlugin::default_nearest()),
         )
-        .add_plugins(DebugPlugin)
+        //.add_plugins(DebugPlugin)
         .add_plugins(AssetLoaderPlugin) //textures etc
         .add_plugins(PlayerPlugin) //player
         .add_plugins(EnemyPlugin)

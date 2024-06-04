@@ -32,14 +32,23 @@ fn load_assets(
     *scene_assets = SceneAssets {
         player: asset_server.load("sprites/spritesheet.png"),
         enemy: asset_server.load("sprites/spritesheet.png"),
-        projectile: asset_server.load("sprites/cannonball.png"),
+        projectile: asset_server.load("sprites/red.png"),
     };
 
     //Texture atlasses
-    let layout =
+    let layout_p =
         TextureAtlasLayout::from_grid(Vec2::new(PLAYER_SIZE, PLAYER_SIZE), 4, 1, None, None);
-    let tal = texture_atlas_layouts.add(layout);
-    h_atlas.player = Some(tal);
+    let tal_p = texture_atlas_layouts.add(layout_p);
+    h_atlas.player = Some(tal_p);
+
+    let layout_e =
+        TextureAtlasLayout::from_grid(Vec2::new(PLAYER_SIZE, PLAYER_SIZE), 4, 1, None, None);
+    let tal_e = texture_atlas_layouts.add(layout_e);
+    h_atlas.enemy = Some(tal_e);
+
+    let layout_projectile = TextureAtlasLayout::from_grid(Vec2::new(8., 8.), 1, 1, None, None);
+    let tal_projectile = texture_atlas_layouts.add(layout_projectile);
+    h_atlas.projectile = Some(tal_projectile);
 }
 
 // pub struct CharacterSheet {
