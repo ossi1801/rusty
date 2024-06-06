@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use rand::prelude::*;
 
+use crate::assets_loader::{SceneAssets, SceneAssetsAtlas};
 use crate::player::{Player, PLAYER_SIZE};
 pub struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
@@ -52,18 +53,22 @@ pub fn confine_player_movement_collisions(
 pub fn spawn_enemies(
     mut commands: Commands,
     window_query: Query<&Window, With<PrimaryWindow>>,
-    asset_server: Res<AssetServer>,
+    scene_assets: Res<SceneAssets>,
+    scene_atlasses: Res<SceneAssetsAtlas>,
 ) {
     let window = window_query.get_single().unwrap();
-
     for _ in 0..NUMBER_OF_ENEMIES {
         let random_x = random::<f32>() * window.width() as f32;
         let random_y = random::<f32>() * window.height() as f32;
         println!("x:{random_x} y: {random_y}");
         commands.spawn((
-            SpriteBundle {
+            SpriteSheetBundle {
+                texture: scene_assets.enemy.clone(),
+                atlas: TextureAtlas {
+                    index: 0,
+                    layout: scene_atlasses.enemy.clone().unwrap(), //texture_atlas_layout,
+                },
                 transform: Transform::from_xyz(random_x, random_y, 0.0),
-                texture: asset_server.load("sprites/cannonball.png"),
                 ..default()
             },
             Enemy {
