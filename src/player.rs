@@ -7,6 +7,7 @@ pub struct PlayerPlugin;
 #[derive(Component)]
 pub struct Player {
     pub direction: PlayerDirection,
+    pub hp:i32,
 }
 #[derive(PartialEq, Debug)]
 pub enum PlayerDirection {
@@ -46,6 +47,7 @@ fn spawn_player(
         },
         Player {
             direction: PlayerDirection::Left,
+            hp:100,
         },
     ));
 }

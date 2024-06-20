@@ -7,6 +7,7 @@ mod enemy;
 mod player; //Tell rust what .rs file to scan;
 mod projectiles;
 mod tiles;
+mod ui;
 
 use assets_loader::AssetLoaderPlugin;
 use camera::CameraPlugin;
@@ -15,6 +16,7 @@ use enemy::EnemyPlugin;
 use player::PlayerPlugin; //import from player file player plugin
 use projectiles::{MovementPlugin, ProjectilesPlugin};
 use tiles::TilesBgrPlugin;
+use ui::UserInterfacePlugin;
 
 pub const SCALE: f32 = 2.0;
 
@@ -34,6 +36,7 @@ fn main() {
         )
         //.add_plugins(DebugPlugin)
         .add_plugins(AssetLoaderPlugin) //textures etc
+        .add_plugins(UserInterfacePlugin)
         .add_plugins(PlayerPlugin) //player
         .add_plugins(EnemyPlugin)
         .add_plugins(MovementPlugin) //Physics

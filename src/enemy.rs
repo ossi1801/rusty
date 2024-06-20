@@ -1,5 +1,5 @@
-use bevy::{prelude::*, transform};
 use bevy::window::PrimaryWindow;
+use bevy::{prelude::*, transform};
 use rand::prelude::*;
 
 use crate::assets_loader::{SceneAssets, SceneAssetsAtlas};
@@ -19,8 +19,7 @@ pub struct Enemy {
     w: f32,
     h: f32,
     speed: f32,
-    vision_radius:f32,
-
+    vision_radius: f32,
 }
 #[derive(Component)]
 pub struct Collision {}
@@ -28,14 +27,12 @@ pub struct Collision {}
 pub const NUMBER_OF_ENEMIES: usize = 16;
 
 pub fn confine_player_movement_collisions(
-    mut player_query: Query<&mut Transform, (With<Player>,Without<Enemy>)>,
-    mut collision_query: Query<(&Transform,&Enemy), (With<Collision>,Without<Player>)>,
+    mut player_query: Query<(&mut Transform, &mut Player), (With<Player>, Without<Enemy>)>,
+    mut collision_query: Query<(&Transform, &Enemy), (With<Collision>, Without<Player>)>,
 ) {
-    if let Ok(mut player_transform) = player_query.get_single_mut() {
+    if let Ok((mut player_transform, mut player)) = player_query.get_single_mut() {
         for q in collision_query.iter_mut() {
             let collider = q.0.translation;
-            //let collision_object = collision_query.get_single().unwrap();
-
             let half_player_size = PLAYER_SIZE / 2.0; // 32.0
             let mut translation = player_transform.translation;
 
@@ -47,6 +44,7 @@ pub fn confine_player_movement_collisions(
                 let tmp = player_transform.translation.z; // z uselss
                 player_transform.translation -=
                     Vec3::new(collider.x - translation.x, collider.y - translation.y, tmp);
+                player.hp += -1;
             }
         }
     }
@@ -87,28 +85,29 @@ pub fn spawn_enemies(
     }
 }
 
-
-pub fn update_enemy_position (
-    mut player_query: Query<(&mut Transform, &mut Player), (With<Player>,Without<Enemy>)>,
-    mut enemy_query: Query<(&mut Transform, &mut Enemy), (With<Enemy>,Without<Player>)>,
+pub fn update_enemy_position(
+    mut player_query: Query<(&mut Transform, &mut Player), (With<Player>, Without<Enemy>)>,
+    mut enemy_query: Query<(&mut Transform, &mut Enemy), (With<Enemy>, Without<Player>)>,
     time: Res<Time>,
 ) {
     let p = player_query.get_single_mut().expect("player query failed");
-    let p_translation: Vec3 = p.0.translation;//.normalize();
-    for (mut t ,e) in enemy_query.iter_mut() {
-        let tmp: Vec3= t.translation;
-        if is_in_range(&tmp, &p_translation, e.vision_radius){ // check if player in range
-            t.translation += from_to_vec3_normalize(tmp,p_translation) * e.speed * time.delta_seconds();
+    let p_translation: Vec3 = p.0.translation; //.normalize();
+    for (mut t, e) in enemy_query.iter_mut() {
+        let tmp: Vec3 = t.translation;
+        if is_in_range(&tmp, &p_translation, e.vision_radius) {
+            // check if player in range
+            t.translation +=
+                from_to_vec3_normalize(tmp, p_translation) * e.speed * time.delta_seconds();
+        } else if is_in_range(&tmp, &e.spawn_location, 30.0) == false {
+            // if is not in  home
+            t.translation +=
+                from_to_vec3_normalize(tmp, e.spawn_location) * e.speed * time.delta_seconds();
         }
-        else if is_in_range(&tmp, &e.spawn_location, 30.0)==false{ // if is not in  home
-            t.translation += from_to_vec3_normalize(tmp,e.spawn_location) * e.speed * time.delta_seconds();
-        }
-        
     }
 }
-pub fn from_to_vec3_normalize(from:Vec3,to:Vec3)-> Vec3{
-    return Vec3::new(to.x-from.x,to.y-from.y,0.).normalize();
+pub fn from_to_vec3_normalize(from: Vec3, to: Vec3) -> Vec3 {
+    return Vec3::new(to.x - from.x, to.y - from.y, 0.).normalize();
 }
-pub fn is_in_range(from:&Vec3,to:&Vec3,range_float:f32)->bool{
-    return ((to.x-from.x).abs()+(to.y-from.y).abs())<range_float;
+pub fn is_in_range(from: &Vec3, to: &Vec3, range_float: f32) -> bool {
+    return ((to.x - from.x).abs() + (to.y - from.y).abs()) < range_float;
 }
