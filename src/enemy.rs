@@ -20,6 +20,7 @@ pub struct Enemy {
     w: f32,
     h: f32,
     speed: f32,
+    vision_radius:f32,
 
 }
 #[derive(Component)]
@@ -80,6 +81,7 @@ pub fn spawn_enemies(
                 w: 32.0, //todo proper height and width values
                 h: 32.0,
                 speed: 150.,
+                vision_radius: 350.,
             },
             Collision {}, // add collision to enemys  as well?
         ));
@@ -96,10 +98,15 @@ pub fn update_enemy_position (
     let p_translation: Vec3 = p.0.translation;//.normalize();
     for (mut t ,e) in enemy_query.iter_mut() {
         let tmp: Vec3= t.translation;
-        t.translation += from_to_vec3_normalize(tmp,p_translation) * e.speed * time.delta_seconds();
+        if is_in_range(&tmp, &p_translation, e.vision_radius){
+            t.translation += from_to_vec3_normalize(tmp,p_translation) * e.speed * time.delta_seconds();
+        }
         
     }
 }
 pub fn from_to_vec3_normalize(from:Vec3,to:Vec3)-> Vec3{
     return Vec3::new(to.x-from.x,to.y-from.y,0.).normalize();
+}
+pub fn is_in_range(from:&Vec3,to:&Vec3,range_float:f32)->bool{
+    return ((to.x-from.x).abs()+(to.y-from.y).abs())<range_float;
 }
