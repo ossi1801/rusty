@@ -1,14 +1,15 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, transform};
 use bevy::window::PrimaryWindow;
 use rand::prelude::*;
 
 use crate::assets_loader::{SceneAssets, SceneAssetsAtlas};
-use crate::player::{Player, PLAYER_SIZE};
+use crate::player::{player_movement, Player, PLAYER_SIZE};
 pub struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PostStartup, spawn_enemies)
-            .add_systems(Update, confine_player_movement_collisions); //static walls (enemys as test)
+            .add_systems(Update, confine_player_movement_collisions) //static walls (enemys as test)
+            .add_systems(Update, update_enemy_position.after(player_movement));
     }
 }
 
@@ -18,6 +19,8 @@ pub struct Enemy {
     y: f32,
     w: f32,
     h: f32,
+    speed: f32,
+
 }
 #[derive(Component)]
 pub struct Collision {}
@@ -76,8 +79,27 @@ pub fn spawn_enemies(
                 y: random_y,
                 w: 32.0, //todo proper height and width values
                 h: 32.0,
+                speed: 150.,
             },
             Collision {}, // add collision to enemys  as well?
         ));
     }
+}
+
+
+pub fn update_enemy_position (
+    mut player_query: Query<(&mut Transform, &mut Player), (With<Player>,Without<Enemy>)>,
+    mut enemy_query: Query<(&mut Transform, &mut Enemy), (With<Enemy>,Without<Player>)>,
+    time: Res<Time>,
+) {
+    let p = player_query.get_single_mut().expect("player query failed");
+    let p_translation: Vec3 = p.0.translation;//.normalize();
+    for (mut t ,e) in enemy_query.iter_mut() {
+        let tmp: Vec3= t.translation;
+        t.translation += from_to_vec3_normalize(tmp,p_translation) * e.speed * time.delta_seconds();
+        
+    }
+}
+pub fn from_to_vec3_normalize(from:Vec3,to:Vec3)-> Vec3{
+    return Vec3::new(to.x-from.x,to.y-from.y,0.).normalize();
 }
