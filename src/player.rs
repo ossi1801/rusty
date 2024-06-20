@@ -15,7 +15,7 @@ pub enum PlayerDirection {
     Up,
     Down,
 }
-pub const PLAYER_SPEED: f32 = 500.0;
+pub const PLAYER_SPEED: f32 = 250.0;
 pub const PLAYER_SIZE: f32 = 32.0; // This is the player sprite size.
 
 impl Plugin for PlayerPlugin {

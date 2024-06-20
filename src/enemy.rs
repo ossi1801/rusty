@@ -15,8 +15,7 @@ impl Plugin for EnemyPlugin {
 
 #[derive(Component)]
 pub struct Enemy {
-    x: f32,
-    y: f32,
+    spawn_location: Vec3,
     w: f32,
     h: f32,
     speed: f32,
@@ -29,20 +28,21 @@ pub struct Collision {}
 pub const NUMBER_OF_ENEMIES: usize = 16;
 
 pub fn confine_player_movement_collisions(
-    mut player_query: Query<&mut Transform, With<Player>>,
-    mut collision_query: Query<&Enemy, With<Collision>>,
+    mut player_query: Query<&mut Transform, (With<Player>,Without<Enemy>)>,
+    mut collision_query: Query<(&Transform,&Enemy), (With<Collision>,Without<Player>)>,
 ) {
     if let Ok(mut player_transform) = player_query.get_single_mut() {
-        for collider in collision_query.iter_mut() {
+        for q in collision_query.iter_mut() {
+            let collider = q.0.translation;
             //let collision_object = collision_query.get_single().unwrap();
 
             let half_player_size = PLAYER_SIZE / 2.0; // 32.0
             let mut translation = player_transform.translation;
 
             if collider.x < translation.x + half_player_size
-                && collider.x + collider.w > translation.x
+                && collider.x + q.1.w > translation.x
                 && collider.y < translation.y + half_player_size
-                && collider.y + collider.h > translation.y
+                && collider.y + q.1.h > translation.y
             {
                 let tmp = player_transform.translation.z; // z uselss
                 player_transform.translation -=
@@ -76,12 +76,11 @@ pub fn spawn_enemies(
                 ..default()
             },
             Enemy {
-                x: random_x,
-                y: random_y,
+                spawn_location: Vec3::new(random_x, random_y, 0.0),
                 w: 32.0, //todo proper height and width values
                 h: 32.0,
                 speed: 150.,
-                vision_radius: 350.,
+                vision_radius: 250.,
             },
             Collision {}, // add collision to enemys  as well?
         ));
@@ -98,8 +97,11 @@ pub fn update_enemy_position (
     let p_translation: Vec3 = p.0.translation;//.normalize();
     for (mut t ,e) in enemy_query.iter_mut() {
         let tmp: Vec3= t.translation;
-        if is_in_range(&tmp, &p_translation, e.vision_radius){
+        if is_in_range(&tmp, &p_translation, e.vision_radius){ // check if player in range
             t.translation += from_to_vec3_normalize(tmp,p_translation) * e.speed * time.delta_seconds();
+        }
+        else if is_in_range(&tmp, &e.spawn_location, 30.0)==false{ // if is not in  home
+            t.translation += from_to_vec3_normalize(tmp,e.spawn_location) * e.speed * time.delta_seconds();
         }
         
     }
