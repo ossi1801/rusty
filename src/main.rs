@@ -1,7 +1,8 @@
 use bevy::prelude::*;
-
+use bevy_rapier2d::prelude::*;
 mod assets_loader;
 mod camera;
+mod collision;
 mod debug;
 mod enemy;
 mod player; //Tell rust what .rs file to scan;
@@ -11,6 +12,7 @@ mod ui;
 
 use assets_loader::AssetLoaderPlugin;
 use camera::CameraPlugin;
+use collision::CollisionSystemPlugin;
 use debug::DebugPlugin;
 use enemy::EnemyPlugin;
 use player::PlayerPlugin; //import from player file player plugin
@@ -35,6 +37,9 @@ fn main() {
                 .set(ImagePlugin::default_nearest()),
         )
         //.add_plugins(DebugPlugin)
+        .add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(32.0))
+        .add_plugins(RapierDebugRenderPlugin::default())
+        .add_plugins(CollisionSystemPlugin)
         .add_plugins(AssetLoaderPlugin) //textures etc
         .add_plugins(UserInterfacePlugin)
         .add_plugins(PlayerPlugin) //player
