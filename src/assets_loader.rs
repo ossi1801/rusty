@@ -31,7 +31,7 @@ fn load_assets(
 ) {
     *scene_assets = SceneAssets {
         player: asset_server.load("sprites/spritesheet.png"),
-        enemy: asset_server.load("sprites/blob1.png"),
+        enemy: asset_server.load("sprites/blobs.png"),
         projectile: asset_server.load("sprites/red.png"),
     };
 
@@ -43,7 +43,7 @@ fn load_assets(
 
     //enemy
     let layout_e =
-        TextureAtlasLayout::from_grid(Vec2::new(PLAYER_SIZE, PLAYER_SIZE), 1, 1, None, None);
+        TextureAtlasLayout::from_grid(Vec2::new(PLAYER_SIZE, PLAYER_SIZE), 4, 1, None, None);
     let tal_e = texture_atlas_layouts.add(layout_e);
     h_atlas.enemy = Some(tal_e);
 

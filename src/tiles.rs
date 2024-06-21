@@ -49,13 +49,13 @@ fn spawn_tile_bgr(
     for i in 0..100 {
         for k in 0..100 {
             let layout =
-                TextureAtlasLayout::from_grid(Vec2::new(TILE_SIZE, TILE_SIZE), 1, 2, None, None);
+                TextureAtlasLayout::from_grid(Vec2::new(TILE_SIZE, TILE_SIZE), 1, 1, None, None);
             let texture_atlas_layout = texture_atlas_layouts.add(layout);
             let x = TILE_SIZE * i as f32;
             let y = TILE_SIZE * k as f32;
             commands.spawn((
                 SpriteSheetBundle {
-                    texture: asset_server.load("sprites/tiles.png"), //default
+                    texture: asset_server.load("sprites/green.PNG"), //default
                     atlas: TextureAtlas {
                         index: 0,
                         layout: texture_atlas_layout,

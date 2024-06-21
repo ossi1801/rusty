@@ -9,7 +9,8 @@ impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PostStartup, spawn_enemies)
             .add_systems(Update, confine_player_movement_collisions) //static walls (enemys as test)
-            .add_systems(Update, update_enemy_position.after(player_movement));
+            .add_systems(Update, update_enemy_position.after(player_movement))
+            .add_systems(Update, animate_enemys);
     }
 }
 
@@ -62,7 +63,7 @@ pub fn spawn_enemies(
     for _ in 0..NUMBER_OF_ENEMIES {
         let random_x = random::<f32>() * window.width() as f32;
         let random_y = random::<f32>() * window.height() as f32;
-        println!("x:{random_x} y: {random_y}");
+        let animation_indices = AnimationIndices { first: 0, last: 3 };
         commands.spawn((
             SpriteSheetBundle {
                 texture: scene_assets.enemy.clone(),
@@ -80,7 +81,9 @@ pub fn spawn_enemies(
                 speed: 150.,
                 vision_radius: 250.,
             },
-            Collision {}, // add collision to enemys  as well?
+            Collision {},      // add collision to enemys  as well?
+            animation_indices, //anims
+            AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)), //anims
         ));
     }
 }
@@ -110,4 +113,29 @@ pub fn from_to_vec3_normalize(from: Vec3, to: Vec3) -> Vec3 {
 }
 pub fn is_in_range(from: &Vec3, to: &Vec3, range_float: f32) -> bool {
     return ((to.x - from.x).abs() + (to.y - from.y).abs()) < range_float;
+}
+
+#[derive(Component)]
+struct AnimationIndices {
+    first: usize,
+    last: usize,
+}
+
+#[derive(Component, Deref, DerefMut)]
+struct AnimationTimer(Timer);
+
+fn animate_enemys(
+    time: Res<Time>,
+    mut query: Query<(&AnimationIndices, &mut AnimationTimer, &mut TextureAtlas), With<Enemy>>,
+) {
+    for (indices, mut timer, mut atlas) in &mut query {
+        timer.tick(time.delta());
+        if timer.just_finished() {
+            atlas.index = if atlas.index == indices.last {
+                indices.first
+            } else {
+                atlas.index + 1
+            };
+        }
+    }
 }

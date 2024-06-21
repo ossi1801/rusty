@@ -67,21 +67,23 @@ fn player_projectile_controls(
             info!("{:?}", player.direction);
             let mut dir: Direction3d = transform.up();
             let mut degr: f32 = 0.;
-            if player.direction == PlayerDirection::Left {
-                degr = 90.;
-                dir = transform.left();
-            }
-            if player.direction == PlayerDirection::Right {
-                degr = 0.;
-                dir = transform.right();
-            }
-            if player.direction == PlayerDirection::Up {
-                degr = 45.;
-                dir = transform.up();
-            }
-            if player.direction == PlayerDirection::Down {
-                degr = -45.;
-                dir = transform.down();
+            match player.direction {
+                PlayerDirection::Left => {
+                    degr = 90.;
+                    dir = transform.left();
+                }
+                PlayerDirection::Right => {
+                    degr = 0.;
+                    dir = transform.right();
+                }
+                PlayerDirection::Up => {
+                    degr = 45.;
+                    dir = transform.up();
+                }
+                PlayerDirection::Down => {
+                    degr = -45.;
+                    dir = transform.down();
+                }
             }
             commands.spawn((
                 MovingObjectBundle {
