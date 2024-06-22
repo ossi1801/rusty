@@ -1,16 +1,20 @@
+use std::time::Duration;
+
 use bevy::window::PrimaryWindow;
 use bevy::{prelude::*, transform};
 use bevy_rapier2d::prelude::*;
 use rand::prelude::*;
 
 use crate::assets_loader::{SceneAssetBundles, SceneAssets, SceneAssetsAtlas};
+
 use crate::player::{player_movement, Player, PLAYER_SIZE};
 pub struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PostStartup, spawn_enemies)
             .add_systems(Update, update_enemy_position.after(player_movement))
-            .add_systems(Update, animate_enemys);
+            .add_systems(Update, animate_enemys)
+            .add_systems(Update, despawn_timer_tick);
     }
 }
 
@@ -22,6 +26,7 @@ pub struct Enemy {
     speed: f32,
     vision_radius: f32,
     pub hp: i32,
+    pub despawn: DespawnTime,
 }
 #[derive(Component)]
 pub struct Collision {}
@@ -49,7 +54,10 @@ pub fn spawn_enemies(
                     h: 32.0,
                     speed: 150.,
                     vision_radius: 250.,
-                    hp: 10,
+                    hp: 1,
+                    despawn: DespawnTime {
+                        timer: Timer::new(Duration::from_millis(1500), TimerMode::Once),
+                    },
                 },
                 Collision {},      // add collision to enemys  as well?
                 animation_indices, //anims
@@ -109,6 +117,28 @@ fn animate_enemys(
             } else {
                 atlas.index + 1
             };
+        }
+    }
+}
+#[derive(Component)]
+pub struct DespawnTime {
+    ///Death animation timer
+    pub timer: Timer,
+}
+
+fn despawn_timer_tick(
+    mut commands: Commands,
+    time: Res<Time>,
+    mut query: Query<(&mut Transform, &mut Enemy, Entity), With<Enemy>>,
+) {
+    for (mut reciever_transform, mut reciever, reciever_entity) in &mut query {
+        if reciever.hp <= 0 {
+            reciever.despawn.timer.tick(time.delta());
+            reciever_transform.rotate(Quat::from_rotation_y(1.0));
+            // reciever.opacity animation 100. 0 then depsanw
+            if reciever.despawn.timer.finished() {
+                commands.entity(reciever_entity).despawn();
+            }
         }
     }
 }

@@ -26,18 +26,10 @@ fn player_projectile_controls(
         if keyboard_input.pressed(KeyCode::Space) {
             let mut velocity: Vec2 = Vec2::new(0., 0.);
             match player.direction {
-                PlayerDirection::Left => {
-                    velocity = Vec2::new(-1., 0.);
-                }
-                PlayerDirection::Right => {
-                    velocity = Vec2::new(1., 0.);
-                }
-                PlayerDirection::Up => {
-                    velocity = Vec2::new(0., 1.);
-                }
-                PlayerDirection::Down => {
-                    velocity = Vec2::new(0., -1.);
-                }
+                PlayerDirection::Left => velocity = Vec2::new(-1., 0.),
+                PlayerDirection::Right => velocity = Vec2::new(1., 0.),
+                PlayerDirection::Up => velocity = Vec2::new(0., 1.),
+                PlayerDirection::Down => velocity = Vec2::new(0., -1.),
             }
             scene_asset_bundles.projectile.transform = Transform {
                 translation: transform.translation,

@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-
+use rand::prelude::*;
 pub struct TilesBgrPlugin;
 impl Plugin for TilesBgrPlugin {
     fn build(&self, app: &mut App) {
@@ -51,6 +51,7 @@ fn spawn_tile_bgr(
             let layout =
                 TextureAtlasLayout::from_grid(Vec2::new(TILE_SIZE, TILE_SIZE), 1, 1, None, None);
             let texture_atlas_layout = texture_atlas_layouts.add(layout);
+
             let x = TILE_SIZE * i as f32;
             let y = TILE_SIZE * k as f32;
             commands.spawn((
@@ -69,6 +70,32 @@ fn spawn_tile_bgr(
                 },
                 Tiles {},
             ));
+
+            let rnd = rand::thread_rng().gen_range(0..100);
+            if rnd % 10 == 0 {
+                let layout = TextureAtlasLayout::from_grid(
+                    Vec2::new(TILE_SIZE, TILE_SIZE),
+                    2,
+                    1,
+                    None,
+                    None,
+                );
+                let texture_atlas_layout = texture_atlas_layouts.add(layout);
+
+                commands.spawn((SpriteSheetBundle {
+                    texture: asset_server.load("sprites/tile_detail.png"), //default
+                    atlas: TextureAtlas {
+                        index: rnd, //index loops around if greater
+                        layout: texture_atlas_layout,
+                    },
+                    transform: Transform::from_xyz(x, y, 0.0).with_translation(Vec3 {
+                        x: x,
+                        y: y,
+                        z: -4.,
+                    }),
+                    ..default()
+                },));
+            }
         }
     }
 }
