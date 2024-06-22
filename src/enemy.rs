@@ -21,6 +21,7 @@ pub struct Enemy {
     h: f32,
     speed: f32,
     vision_radius: f32,
+    pub hp: i32,
 }
 #[derive(Component)]
 pub struct Collision {}
@@ -48,6 +49,7 @@ pub fn spawn_enemies(
                     h: 32.0,
                     speed: 150.,
                     vision_radius: 250.,
+                    hp: 10,
                 },
                 Collision {},      // add collision to enemys  as well?
                 animation_indices, //anims

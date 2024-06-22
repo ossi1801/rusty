@@ -13,6 +13,9 @@ impl Plugin for ProjectilesPlugin {
     }
 }
 
+#[derive(Component, Debug)]
+pub struct PlayerProjecttile;
+
 fn player_projectile_controls(
     mut commands: Commands,
     query: Query<(&Transform, &Player), With<Player>>,
@@ -42,7 +45,11 @@ fn player_projectile_controls(
                 ..default()
             };
             let projectile_id = commands
-                .spawn((scene_asset_bundles.projectile.clone(), RigidBody::Dynamic))
+                .spawn((
+                    scene_asset_bundles.projectile.clone(),
+                    PlayerProjecttile,
+                    RigidBody::Dynamic,
+                ))
                 .insert(Collider::cuboid(8., 8.))
                 .insert(Sensor)
                 .insert(Velocity {
@@ -50,7 +57,7 @@ fn player_projectile_controls(
                     angvel: 0.0,
                 })
                 .id();
-            info!("{:?}", projectile_id);
+            //info!("{:?}", projectile_id);
         }
     }
 }
