@@ -1,5 +1,6 @@
 use bevy::window::PrimaryWindow;
 use bevy::{prelude::*, transform};
+use bevy_rapier2d::prelude::*;
 use rand::prelude::*;
 
 use crate::assets_loader::{SceneAssets, SceneAssetsAtlas};
@@ -8,7 +9,7 @@ pub struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PostStartup, spawn_enemies)
-            .add_systems(Update, confine_player_movement_collisions) //static walls (enemys as test)
+            //.add_systems(Update, confine_player_movement_collisions) //static walls (enemys as test)
             .add_systems(Update, update_enemy_position.after(player_movement))
             .add_systems(Update, animate_enemys);
     }
@@ -64,27 +65,31 @@ pub fn spawn_enemies(
         let random_x = random::<f32>() * window.width() as f32;
         let random_y = random::<f32>() * window.height() as f32;
         let animation_indices = AnimationIndices { first: 0, last: 3 };
-        commands.spawn((
-            SpriteSheetBundle {
-                texture: scene_assets.enemy.clone(),
-                atlas: TextureAtlas {
-                    index: 0,
-                    layout: scene_atlasses.enemy.clone().unwrap(), //texture_atlas_layout,
+        commands
+            .spawn((
+                SpriteSheetBundle {
+                    texture: scene_assets.enemy.clone(),
+                    atlas: TextureAtlas {
+                        index: 0,
+                        layout: scene_atlasses.enemy.clone().unwrap(), //texture_atlas_layout,
+                    },
+                    transform: Transform::from_xyz(random_x, random_y, 0.0),
+                    ..default()
                 },
-                transform: Transform::from_xyz(random_x, random_y, 0.0),
-                ..default()
-            },
-            Enemy {
-                spawn_location: Vec3::new(random_x, random_y, 0.0),
-                w: 32.0, //todo proper height and width values
-                h: 32.0,
-                speed: 150.,
-                vision_radius: 250.,
-            },
-            Collision {},      // add collision to enemys  as well?
-            animation_indices, //anims
-            AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)), //anims
-        ));
+                Enemy {
+                    spawn_location: Vec3::new(random_x, random_y, 0.0),
+                    w: 32.0, //todo proper height and width values
+                    h: 32.0,
+                    speed: 150.,
+                    vision_radius: 250.,
+                },
+                Collision {},      // add collision to enemys  as well?
+                animation_indices, //anims
+                AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)), //anims
+                RigidBody::Dynamic,
+            ))
+            .insert(Collider::cuboid(8.0, 8.0))
+            .insert(Sensor);
     }
 }
 

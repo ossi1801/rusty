@@ -18,6 +18,7 @@ pub enum PlayerDirection {
 }
 pub const PLAYER_SPEED: f32 = 250.0;
 pub const PLAYER_SIZE: f32 = 32.0; // This is the player sprite size.
+pub const PLAYER_COLLIDER_SIZE: f32 = PLAYER_SIZE / 2.0;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
@@ -35,7 +36,7 @@ fn spawn_player(
     scene_atlasses: Res<SceneAssetsAtlas>,
 ) {
     let window: &Window = window_query.get_single().unwrap();
-    commands
+    let player_id: Entity = commands
         .spawn((
             SpriteSheetBundle {
                 texture: scene_assets.player.clone(),
@@ -52,8 +53,10 @@ fn spawn_player(
             },
             RigidBody::Dynamic,
         ))
-        .insert(Collider::ball(32.0))
-        .insert(GravityScale(0.0));
+        .insert(Collider::cuboid(PLAYER_COLLIDER_SIZE, PLAYER_COLLIDER_SIZE))
+        .insert(ActiveEvents::COLLISION_EVENTS)
+        .id();
+    //.insert(Sensor);
 }
 
 //Player movement

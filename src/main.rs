@@ -38,6 +38,18 @@ fn main() {
         )
         //.add_plugins(DebugPlugin)
         .add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(32.0))
+        .insert_resource(RapierConfiguration {
+            gravity: Vec2::ZERO,
+            physics_pipeline_active: true,
+            query_pipeline_active: true,
+            timestep_mode: TimestepMode::Variable {
+                max_dt: 1.0 / 60.0,
+                time_scale: 1.0,
+                substeps: 1,
+            },
+            scaled_shape_subdivision: 10,
+            force_update_from_transform_changes: true,
+        })
         .add_plugins(RapierDebugRenderPlugin::default())
         .add_plugins(CollisionSystemPlugin)
         .add_plugins(AssetLoaderPlugin) //textures etc
