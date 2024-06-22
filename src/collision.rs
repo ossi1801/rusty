@@ -7,7 +7,11 @@ pub struct CollisionSystemPlugin;
 impl Plugin for CollisionSystemPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(PostStartup, spawn_world_collider)
-            .add_systems(Update, display_intersection_info);
+            .add_systems(Update, display_intersection_info)
+            .add_systems(
+                PostStartup,
+                modify_collider_restitution.after(spawn_world_collider),
+            );
     }
 }
 fn spawn_world_collider(mut commands: Commands) {
@@ -26,18 +30,25 @@ fn spawn_world_collider(mut commands: Commands) {
         .insert(TransformBundle::from(Transform::from_xyz(0.0, 0.0, 0.0))); //left
 }
 
-fn display_events(
-    mut collision_events: EventReader<CollisionEvent>,
-    mut contact_force_events: EventReader<ContactForceEvent>,
-) {
-    for collision_event in collision_events.read() {
-        info!("Received collision event: {:?}", collision_event);
-    }
-
-    for contact_force_event in contact_force_events.read() {
-        info!("Received contact force event: {:?}", contact_force_event);
+fn modify_collider_restitution(mut restitutions: Query<&mut Restitution>) {
+    for mut restitution in restitutions.iter_mut() {
+        restitution.coefficient = 0.0;
+        restitution.combine_rule = CoefficientCombineRule::Min;
     }
 }
+
+// fn display_events(
+//     mut collision_events: EventReader<CollisionEvent>,
+//     mut contact_force_events: EventReader<ContactForceEvent>,
+// ) {
+//     for collision_event in collision_events.read() {
+//         info!("Received collision event: {:?}", collision_event);
+//     }
+
+//     for contact_force_event in contact_force_events.read() {
+//         info!("Received contact force event: {:?}", contact_force_event);
+//     }
+// }
 
 fn display_intersection_info(
     rapier_context: Res<RapierContext>,

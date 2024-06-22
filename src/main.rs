@@ -16,7 +16,7 @@ use collision::CollisionSystemPlugin;
 use debug::DebugPlugin;
 use enemy::EnemyPlugin;
 use player::PlayerPlugin; //import from player file player plugin
-use projectiles::{MovementPlugin, ProjectilesPlugin};
+use projectiles::*;
 use tiles::TilesBgrPlugin;
 use ui::UserInterfacePlugin;
 
@@ -56,7 +56,6 @@ fn main() {
         .add_plugins(UserInterfacePlugin)
         .add_plugins(PlayerPlugin) //player
         .add_plugins(EnemyPlugin)
-        .add_plugins(MovementPlugin) //Physics
         .add_plugins(ProjectilesPlugin) //Spells
         .add_plugins(CameraPlugin) //main camera
         .add_plugins(TilesBgrPlugin) //Background
