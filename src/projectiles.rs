@@ -14,7 +14,7 @@ impl Plugin for ProjectilesPlugin {
 }
 
 #[derive(Component, Debug)]
-pub struct PlayerProjecttile;
+pub struct PlayerProjecttile(pub f32);
 
 fn player_projectile_controls(
     mut commands: Commands,
@@ -39,7 +39,7 @@ fn player_projectile_controls(
             let projectile_id = commands
                 .spawn((
                     scene_asset_bundles.projectile.clone(),
-                    PlayerProjecttile,
+                    PlayerProjecttile(10.0),
                     RigidBody::Dynamic,
                 ))
                 .insert(Collider::cuboid(8., 8.))

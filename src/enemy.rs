@@ -6,6 +6,7 @@ use std::time::Duration;
 
 use crate::assets_loader::SceneAssetBundles;
 
+use crate::damage::Health;
 use crate::player::{player_movement, Player, PLAYER_SIZE};
 pub struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
@@ -24,12 +25,10 @@ pub struct Enemy {
     h: f32,
     speed: f32,
     vision_radius: f32,
-    pub hp: i32,
-    pub is_dead: bool,
+    //pub health: Health,
+    pub damage: f32,             //todo damge comp
     pub death_anim_timer: Timer, //Death animation timer
 }
-#[derive(Component)]
-pub struct Collision {}
 
 pub const NUMBER_OF_ENEMIES: usize = 16;
 
@@ -54,11 +53,17 @@ pub fn spawn_enemies(
                     h: 32.0,
                     speed: 150.,
                     vision_radius: 250.,
-                    hp: 1,
-                    is_dead: false,
+                    // health: Health {
+                    //     hp: 5.,
+                    //     is_dead: false,
+                    // },
+                    damage: 5.0,
                     death_anim_timer: Timer::new(Duration::from_millis(700), TimerMode::Once),
                 },
-                Collision {},      // add collision to enemys  as well?
+                Health {
+                    hp: 5.,
+                    is_dead: false,
+                },
                 animation_indices, //anims
                 AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)), //anims
                 RigidBody::Dynamic,
@@ -70,13 +75,13 @@ pub fn spawn_enemies(
 
 pub fn update_enemy_position(
     mut player_query: Query<(&mut Transform, &mut Player), (With<Player>, Without<Enemy>)>,
-    mut enemy_query: Query<(&mut Transform, &mut Enemy), (With<Enemy>, Without<Player>)>,
+    mut enemy_query: Query<(&mut Transform, &mut Enemy, &Health), (With<Enemy>, Without<Player>)>,
     time: Res<Time>,
 ) {
     let p = player_query.get_single_mut().expect("player query failed");
     let p_translation: Vec3 = p.0.translation; //.normalize();
-    for (mut t, e) in enemy_query.iter_mut() {
-        if e.is_dead {
+    for (mut t, e, health) in enemy_query.iter_mut() {
+        if health.is_dead {
             continue; // skip dead enemys
         }
         let tmp: Vec3 = t.translation;
@@ -126,12 +131,10 @@ fn animate_enemys(
 fn despawn_timer_tick(
     mut commands: Commands,
     time: Res<Time>,
-    mut query: Query<(&mut Transform, &mut Enemy, Entity, &mut Sprite), With<Enemy>>,
+    mut query: Query<(&mut Transform, &mut Enemy, Entity, &mut Sprite, &Health), With<Enemy>>,
 ) {
-    for (mut reciever_transform, mut reciever, reciever_entity, mut sprite) in &mut query {
-        if reciever.hp <= 0 {
-            reciever.is_dead = true;
-
+    for (mut reciever_transform, mut reciever, reciever_entity, mut sprite, health) in &mut query {
+        if health.is_dead {
             //Turn dead and fade opacity for dramatic effect
             reciever.death_anim_timer.tick(time.delta());
             let percentage: f32 = reciever.death_anim_timer.elapsed().as_secs_f32()

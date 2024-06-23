@@ -6,7 +6,7 @@ pub struct PlayerPlugin;
 #[derive(Component)]
 pub struct Player {
     pub direction: PlayerDirection,
-    pub hp: i32,
+    pub hp: f32,
 }
 #[derive(PartialEq, Debug)]
 pub enum PlayerDirection {
@@ -33,7 +33,7 @@ fn spawn_player(mut commands: Commands, scene_asset_bundles: Res<SceneAssetBundl
             scene_asset_bundles.player.clone(), //spritesheet
             Player {
                 direction: PlayerDirection::Left,
-                hp: 100,
+                hp: 100.,
             },
             RigidBody::KinematicPositionBased,
         ))

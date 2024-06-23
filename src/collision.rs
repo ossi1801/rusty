@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::{enemy::Enemy, player::Player, PlayerProjecttile};
+use crate::{damage::*, enemy::Enemy, player::Player, PlayerProjecttile};
 
 pub struct CollisionSystemPlugin;
 impl Plugin for CollisionSystemPlugin {
@@ -16,18 +16,23 @@ impl Plugin for CollisionSystemPlugin {
     }
 }
 fn spawn_world_collider(mut commands: Commands) {
-    let size: f32 = 3200.0; //100 tiles * tile size 32px
-    let half_size: f32 = size / 2.0;
+    let width: f32 = 3200.0; //100 tiles * tile size 32px
+    let thickness: f32 = 10.;
+    let half_size: f32 = width / 2.0;
     commands
         .spawn(RigidBody::Fixed)
-        .insert(Collider::cuboid(half_size, 10.0))
-        .insert(TransformBundle::from(Transform::from_xyz(0.0, 0.0, 0.0))); //bot
+        .insert(Collider::cuboid(half_size, thickness))
+        .insert(TransformBundle::from(Transform::from_xyz(
+            half_size, -thickness, 0.0,
+        ))); //bot
     commands
-        .spawn(Collider::cuboid(half_size, 10.0))
-        .insert(TransformBundle::from(Transform::from_xyz(0.0, size, 0.0))); //top
+        .spawn(Collider::cuboid(half_size, thickness))
+        .insert(TransformBundle::from(Transform::from_xyz(
+            half_size, width, 0.0,
+        ))); //top
     commands
-        .spawn(Collider::cuboid(10.0, half_size))
-        .insert(TransformBundle::from(Transform::from_xyz(size, 0.0, 0.0))); //right
+        .spawn(Collider::cuboid(thickness, half_size))
+        .insert(TransformBundle::from(Transform::from_xyz(width, 0.0, 0.0))); //right
     commands
         .spawn(Collider::cuboid(10.0, half_size))
         .insert(TransformBundle::from(Transform::from_xyz(0.0, 0.0, 0.0))); //left
@@ -53,6 +58,7 @@ fn modify_collider_restitution(mut restitutions: Query<&mut Restitution>) {
 // }
 
 fn register_player_collide_with_enemy(
+    time: Res<Time>,
     rapier_context: Res<RapierContext>,
     mut player_query: Query<(&mut Transform, &mut Player, Entity), (With<Player>, Without<Enemy>)>,
     mut collision_query: Query<(&Transform, &Enemy, Entity), (With<Sensor>, Without<Player>)>,
@@ -61,7 +67,7 @@ fn register_player_collide_with_enemy(
         for q in collision_query.iter_mut() {
             /* Find the intersection pair, if it exists, between two colliders. */
             if rapier_context.intersection_pair(player_entity, q.2) == Some(true) {
-                player.hp += -1;
+                player.hp += -(q.1.damage * time.delta_seconds());
                 println!(
                     "The entities {:?} and {:?} have intersecting colliders!",
                     player_entity, q.2
@@ -74,20 +80,24 @@ fn register_player_collide_with_enemy(
 fn register_projectile_hits(
     mut commands: Commands,
     rapier_context: Res<RapierContext>,
+    mut events: EventWriter<DamageEvent>,
     mut reciever_query: Query<(&mut Enemy, Entity), (With<Enemy>, Without<PlayerProjecttile>)>,
     mut collision_query: Query<
-        (&Transform, &PlayerProjecttile, Entity),
+        (&PlayerProjecttile, Entity),
         (With<Sensor>, With<PlayerProjecttile>, Without<Enemy>),
     >,
 ) {
     for (mut reciever, reciever_entity) in reciever_query.iter_mut() {
-        for q in collision_query.iter_mut() {
+        for (pp, projectile_entity) in collision_query.iter_mut() {
             /* Find the intersection pair, if it exists, between two colliders. */
-            if rapier_context.intersection_pair(reciever_entity, q.2) == Some(true) {
+            if rapier_context.intersection_pair(reciever_entity, projectile_entity) == Some(true) {
                 //player.hp += -1;
                 //if player shot reduce enemy hp else reduce lpayer hp
-                commands.entity(q.2).despawn();
-                reciever.hp += -1;
+                commands.entity(projectile_entity).despawn();
+                events.send(DamageEvent {
+                    damage: pp.0,
+                    target: reciever_entity,
+                });
             }
         }
     }
