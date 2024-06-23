@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use crate::assets_loader::{SceneAssetBundles, SceneAssets, SceneAssetsAtlas};
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -7,6 +9,7 @@ pub struct PlayerPlugin;
 pub struct Player {
     pub direction: PlayerDirection,
     pub hp: f32,
+    pub shoot_btn_timer: Timer,
 }
 #[derive(PartialEq, Debug)]
 pub enum PlayerDirection {
@@ -34,6 +37,7 @@ fn spawn_player(mut commands: Commands, scene_asset_bundles: Res<SceneAssetBundl
             Player {
                 direction: PlayerDirection::Left,
                 hp: 100.,
+                shoot_btn_timer: Timer::new(Duration::from_millis(1200), TimerMode::Once),
             },
             RigidBody::KinematicPositionBased,
         ))
