@@ -1,11 +1,10 @@
-use std::time::Duration;
-
+use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
-use bevy::{prelude::*, transform};
 use bevy_rapier2d::prelude::*;
 use rand::prelude::*;
+use std::time::Duration;
 
-use crate::assets_loader::{SceneAssetBundles, SceneAssets, SceneAssetsAtlas};
+use crate::assets_loader::SceneAssetBundles;
 
 use crate::player::{player_movement, Player, PLAYER_SIZE};
 pub struct EnemyPlugin;
@@ -26,7 +25,8 @@ pub struct Enemy {
     speed: f32,
     vision_radius: f32,
     pub hp: i32,
-    pub despawn: DespawnTime,
+    pub is_dead: bool,
+    pub death_anim_timer: Timer, //Death animation timer
 }
 #[derive(Component)]
 pub struct Collision {}
@@ -44,7 +44,7 @@ pub fn spawn_enemies(
         let random_y = random::<f32>() * window.height() as f32;
         let animation_indices = AnimationIndices { first: 0, last: 3 };
         scene_asset_bundles.enemy.transform = Transform::from_xyz(random_x, random_y, 0.0);
-
+        //scene_asset_bundles.enemy.sprite.color.set_a(0.7);
         commands
             .spawn((
                 scene_asset_bundles.enemy.clone(), //spritesheet
@@ -55,9 +55,8 @@ pub fn spawn_enemies(
                     speed: 150.,
                     vision_radius: 250.,
                     hp: 1,
-                    despawn: DespawnTime {
-                        timer: Timer::new(Duration::from_millis(1500), TimerMode::Once),
-                    },
+                    is_dead: false,
+                    death_anim_timer: Timer::new(Duration::from_millis(700), TimerMode::Once),
                 },
                 Collision {},      // add collision to enemys  as well?
                 animation_indices, //anims
@@ -77,6 +76,9 @@ pub fn update_enemy_position(
     let p = player_query.get_single_mut().expect("player query failed");
     let p_translation: Vec3 = p.0.translation; //.normalize();
     for (mut t, e) in enemy_query.iter_mut() {
+        if e.is_dead {
+            continue; // skip dead enemys
+        }
         let tmp: Vec3 = t.translation;
         if is_in_range(&tmp, &p_translation, e.vision_radius) {
             // check if player in range
@@ -120,23 +122,28 @@ fn animate_enemys(
         }
     }
 }
-#[derive(Component)]
-pub struct DespawnTime {
-    ///Death animation timer
-    pub timer: Timer,
-}
 
 fn despawn_timer_tick(
     mut commands: Commands,
     time: Res<Time>,
-    mut query: Query<(&mut Transform, &mut Enemy, Entity), With<Enemy>>,
+    mut query: Query<(&mut Transform, &mut Enemy, Entity, &mut Sprite), With<Enemy>>,
 ) {
-    for (mut reciever_transform, mut reciever, reciever_entity) in &mut query {
+    for (mut reciever_transform, mut reciever, reciever_entity, mut sprite) in &mut query {
         if reciever.hp <= 0 {
-            reciever.despawn.timer.tick(time.delta());
-            reciever_transform.rotate(Quat::from_rotation_y(1.0));
-            // reciever.opacity animation 100. 0 then depsanw
-            if reciever.despawn.timer.finished() {
+            reciever.is_dead = true;
+
+            //Turn dead and fade opacity for dramatic effect
+            reciever.death_anim_timer.tick(time.delta());
+            let percentage: f32 = reciever.death_anim_timer.elapsed().as_secs_f32()
+                / reciever.death_anim_timer.duration().as_secs_f32();
+            let opacity: f32 = 1.0 - percentage;
+            let angle: f32 = (0.35 * reciever.death_anim_timer.duration().as_secs_f32());
+            reciever_transform.rotate(Quat::from_rotation_z(angle));
+            sprite.color.set_a(opacity);
+            //info!("{}", angle);
+
+            //Despawn after animation
+            if reciever.death_anim_timer.finished() {
                 commands.entity(reciever_entity).despawn();
             }
         }
