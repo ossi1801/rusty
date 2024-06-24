@@ -68,10 +68,10 @@ fn register_player_collide_with_enemy(
             /* Find the intersection pair, if it exists, between two colliders. */
             if rapier_context.intersection_pair(player_entity, q.2) == Some(true) {
                 player.hp += -(q.1.damage * time.delta_seconds());
-                println!(
-                    "The entities {:?} and {:?} have intersecting colliders!",
-                    player_entity, q.2
-                );
+                // println!(
+                //     "The entities {:?} and {:?} have intersecting colliders!",
+                //     player_entity, q.2
+                // );
             }
         }
     }
