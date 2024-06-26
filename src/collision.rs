@@ -1,7 +1,9 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::{damage::*, enemy::Enemy, player::Player, PlayerProjecttile};
+use crate::{
+    assets_loader::SceneAssetBundles, damage::*, enemy::Enemy, player::Player, PlayerProjecttile,
+};
 
 pub struct CollisionSystemPlugin;
 impl Plugin for CollisionSystemPlugin {
@@ -11,6 +13,9 @@ impl Plugin for CollisionSystemPlugin {
                 PostStartup,
                 modify_collider_restitution.after(spawn_world_collider),
             )
+            .add_event::<CreateWallEvent>()
+            .add_systems(PostStartup, spawn_buildings.after(spawn_world_collider))
+            .add_systems(Update, spawn_wall_with_collider)
             .add_systems(Update, register_player_collide_with_enemy)
             .add_systems(Update, register_projectile_hits);
     }
@@ -36,6 +41,17 @@ fn spawn_world_collider(mut commands: Commands) {
     commands
         .spawn(Collider::cuboid(10.0, half_size))
         .insert(TransformBundle::from(Transform::from_xyz(0.0, 0.0, 0.0))); //left
+}
+
+fn spawn_buildings(mut ev_writer: EventWriter<CreateWallEvent>) {
+    let block_size: f32 = 32.;
+    for i in 1..10 {
+        ev_writer.send(CreateWallEvent {
+            sprite_index: 1,
+            collider_size: Vec2::new(block_size / 2., block_size / 2.),
+            position: Vec3::new(100., 500. + (block_size * i as f32), 0.),
+        });
+    }
 }
 
 fn modify_collider_restitution(mut restitutions: Query<&mut Restitution>) {
@@ -100,5 +116,33 @@ fn register_projectile_hits(
                 });
             }
         }
+    }
+}
+
+#[derive(Event)]
+pub struct CreateWallEvent {
+    sprite_index: usize,
+    collider_size: Vec2,
+    position: Vec3,
+}
+
+fn spawn_wall_with_collider(
+    mut commands: Commands,
+    scene_asset_bundles: Res<SceneAssetBundles>,
+    mut ev: EventReader<CreateWallEvent>,
+) {
+    for e in ev.read() {
+        let mut sprite = scene_asset_bundles.wall.clone();
+        sprite.atlas.index = e.sprite_index;
+        commands
+            .spawn((
+                sprite,
+                Collider::cuboid(e.collider_size.x, e.collider_size.y),
+            ))
+            .insert(TransformBundle::from(Transform::from_xyz(
+                e.position.x,
+                e.position.y,
+                e.position.z,
+            ))); //
     }
 }

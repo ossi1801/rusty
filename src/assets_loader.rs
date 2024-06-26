@@ -20,6 +20,7 @@ pub struct SceneAssetBundles {
     pub player: SpriteSheetBundle,
     pub enemy: SpriteSheetBundle,
     pub projectile: SpriteSheetBundle,
+    pub wall: SpriteSheetBundle,
 }
 
 pub struct AssetLoaderPlugin;
@@ -88,6 +89,18 @@ fn load_assets(
         atlas: TextureAtlas {
             index: 0,
             layout: h_atlas.projectile.clone().unwrap(),
+        },
+        ..default()
+    };
+
+    let layout_wall = TextureAtlasLayout::from_grid(Vec2::new(32., 32.), 2, 1, None, None);
+    let tal_wall = texture_atlas_layouts.add(layout_wall);
+
+    bundles.wall = SpriteSheetBundle {
+        texture: asset_server.load("sprites/tiles.png"),
+        atlas: TextureAtlas {
+            layout: tal_wall,
+            index: 1,
         },
         ..default()
     };

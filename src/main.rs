@@ -10,6 +10,7 @@ mod player; //Tell rust what .rs file to scan;
 mod projectiles;
 mod tiles;
 mod ui;
+mod weapon;
 
 use assets_loader::AssetLoaderPlugin;
 use camera::CameraPlugin;

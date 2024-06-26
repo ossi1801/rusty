@@ -1,6 +1,7 @@
 use crate::assets_loader::SceneAssetBundles;
 use crate::damage;
 use crate::player::{Player, PlayerDirection};
+use bevy::math::vec2;
 use bevy::prelude::*;
 use bevy::sprite::*;
 use bevy_rapier2d::prelude::*;
@@ -13,6 +14,7 @@ impl Plugin for ProjectilesPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, player_projectile_controls)
             .add_event::<ProjectileLaunchEvent>()
+            //.add_systems(Update, spinning_projectile)
             .add_systems(Update, projectile_event);
     }
 }
@@ -22,13 +24,26 @@ pub struct PlayerProjecttile(pub f32);
 
 fn player_projectile_controls(
     time: Res<Time>,
+    mut keyboard_input: ResMut<ButtonInput<KeyCode>>,
     mut ev_projectile: EventWriter<ProjectileLaunchEvent>,
     mut query: Query<(&Transform, &mut Player), With<Player>>,
-    mut keyboard_input: ResMut<ButtonInput<KeyCode>>,
-    // mut scene_asset_bundles: ResMut<SceneAssetBundles>,
+    // mut weapon_query: Query<(&mut Transform, &Weapon), (With<Weapon>, Without<Player>)>, // mut scene_asset_bundles: ResMut<SceneAssetBundles>,
 ) {
     for (transform, mut player) in query.iter_mut() {
         let input = KeyCode::Space;
+        //let weapon_input = KeyCode::KeyL;
+        // //Weapon once pressed no hold
+        // if keyboard_input.just_pressed(weapon_input) {
+        //     ev_projectile.send(ProjectileLaunchEvent {
+        //         // parent_entity: Entity,
+        //         parent_position: transform.translation,
+        //         projectile_multiplier: 0.5,
+        //         projectile_damage: 0.5,
+        //         projectile_speed: 100.,
+        //         projectile_velocity: Vec2::new(3.14, 1.),
+        //     });
+        //     //do event
+        // }
 
         //If player hold down shoot button increase volume of spell
         if keyboard_input.pressed(input) {
@@ -70,6 +85,7 @@ fn player_projectile_controls(
                     projectile_multiplier: percentage,
                     projectile_damage: damage,
                     projectile_velocity: velocity,
+                    projectile_speed: PROJECTILE_SPEED,
                 });
                 a += 0.5;
             }
@@ -93,6 +109,7 @@ pub struct ProjectileLaunchEvent {
     projectile_multiplier: f32,
     projectile_damage: f32,
     projectile_velocity: Vec2,
+    projectile_speed: f32,
 }
 
 fn projectile_event(
@@ -122,8 +139,22 @@ fn projectile_event(
             .insert(Collider::ball(50.))
             .insert(Sensor)
             .insert(Velocity {
-                linvel: ev.projectile_velocity * PROJECTILE_SPEED,
+                linvel: ev.projectile_velocity * ev.projectile_speed,
                 angvel: 0.0,
             });
     }
 }
+
+// fn spinning_projectile(
+//     time: Res<Time>,
+//     mut projectiles: Query<(&mut Transform, &mut PlayerProjecttile), Without<Player>>,
+//     player: Query<&Transform, With<Player>>,
+// ) {
+//     let p = player.get_single().expect("xd");
+//     for (mut transform, prc) in &mut projectiles {
+//         let look_at_sphere = transform.looking_at(p.translation, *transform.local_y());
+//         let incremental_turn_weight = 100. * time.delta_seconds();
+//         let old_rotation = transform.rotation;
+//         transform.rotation = old_rotation.lerp(look_at_sphere.rotation, incremental_turn_weight);
+//     }
+// }

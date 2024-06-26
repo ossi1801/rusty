@@ -1,15 +1,24 @@
 use std::time::Duration;
 
 use crate::assets_loader::{SceneAssetBundles, SceneAssets, SceneAssetsAtlas};
+use crate::weapon::Weapon;
 use bevy::prelude::*;
+use bevy::sprite::*;
 use bevy_rapier2d::prelude::*;
 pub struct PlayerPlugin;
+impl Plugin for PlayerPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(PostStartup, spawn_player)
+            .add_systems(Update, player_movement);
+    }
+}
 
 #[derive(Component)]
 pub struct Player {
     pub direction: PlayerDirection,
     pub hp: f32,
     pub shoot_btn_timer: Timer,
+    pub weapon: Weapon,
 }
 #[derive(PartialEq, Debug)]
 pub enum PlayerDirection {
@@ -22,15 +31,21 @@ pub const PLAYER_SPEED: f32 = 250.0;
 pub const PLAYER_SIZE: f32 = 32.0; // This is the player sprite size.
 pub const PLAYER_COLLIDER_SIZE: f32 = PLAYER_SIZE / 2.0;
 
-impl Plugin for PlayerPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_systems(PostStartup, spawn_player)
-            .add_systems(Update, player_movement);
-        //   .add_systems(Update, player_projectile_controls.after(player_movement));
-    }
-}
+fn spawn_player(
+    mut commands: Commands,
+    scene_asset_bundles: Res<SceneAssetBundles>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
+) {
+    //Swawn collider for sword
+    let chandle = Mesh2dHandle(meshes.add(Rectangle::new(8., 32.)));
+    let meshbundle = MaterialMesh2dBundle {
+        mesh: chandle,
+        material: materials.add(Color::rgb(1., 0., 0.)), //materials.add(color),
+        ..default()
+    };
+    //end
 
-fn spawn_player(mut commands: Commands, scene_asset_bundles: Res<SceneAssetBundles>) {
     let player_id: Entity = commands
         .spawn((
             scene_asset_bundles.player.clone(), //spritesheet
@@ -38,6 +53,12 @@ fn spawn_player(mut commands: Commands, scene_asset_bundles: Res<SceneAssetBundl
                 direction: PlayerDirection::Left,
                 hp: 100.,
                 shoot_btn_timer: Timer::new(Duration::from_millis(1200), TimerMode::Once),
+                weapon: Weapon {
+                    meshbundle: meshbundle,
+                    rigidbody: RigidBody::Dynamic,
+                    collider: Collider::cuboid(6., PLAYER_COLLIDER_SIZE),
+                    sensor: Sensor,
+                },
             },
             RigidBody::KinematicPositionBased,
         ))
@@ -45,7 +66,6 @@ fn spawn_player(mut commands: Commands, scene_asset_bundles: Res<SceneAssetBundl
         .insert(ActiveEvents::COLLISION_EVENTS)
         .insert(KinematicCharacterController::default())
         .id();
-    //.insert(Sensor);
 }
 
 //Player movement
