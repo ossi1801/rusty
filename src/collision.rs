@@ -1,7 +1,6 @@
-use std::thread::spawn;
-
-use bevy::{prelude::*, scene::ron::de};
+use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
+use rand::prelude::*;
 
 use crate::{
     assets_loader::SceneAssetBundles, damage::*, enemy::Enemy, player::Player, PlayerProjecttile,
@@ -60,16 +59,25 @@ fn spawn_buildings(
     }
 
     //Tree mesh generate test
-    let block_size: f32 = 16.;
+
+    let tree_size_x: f32 = 60.;
+    let tree_size_y: f32 = 74.;
     for i in 1..100 {
-        if i % 10 == 0 {
-            ev_writer.send(CreateWallEvent {
-                sprite_override: Some(scene_asset_bundles.object.clone()),
-                sprite_index: 0,
-                collider_size: Vec2::new(block_size / 2., block_size / 2.),
-                sprite_position: Vec3::new(200., 500. + (block_size * i as f32), 0.),
-                collider_offset: Some(Vec3::new(0., -28., 0.)),
-            });
+        for k in 1..100 {
+            let rnd = rand::thread_rng().gen_range(0..1000);
+            if rnd % 20 == 0 {
+                ev_writer.send(CreateWallEvent {
+                    sprite_override: Some(scene_asset_bundles.object.clone()),
+                    sprite_index: 0,
+                    collider_size: Vec2::new(8., 8.),
+                    sprite_position: Vec3::new(
+                        100. + (tree_size_x * i as f32),
+                        100. + (tree_size_y * k as f32),
+                        0.,
+                    ),
+                    collider_offset: Some(Vec3::new(0., -28., 0.)),
+                });
+            }
         }
     }
 }
