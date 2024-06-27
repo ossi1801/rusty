@@ -112,7 +112,7 @@ fn register_player_collide_with_enemy(
             /* Find the intersection pair, if it exists, between two colliders. */
             //if let Some(contact) = rapier_context.contact_pair(player_entity, enemy_entity) { //test wall
             if rapier_context.intersection_pair(player_entity, enemy_entity) == Some(true) {
-                info!("intersection Colliding");
+                //info!("intersection Colliding");
                 player.hp += -(enemy.damage * time.delta_seconds());
             }
         }
