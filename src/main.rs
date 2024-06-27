@@ -53,7 +53,7 @@ fn main() {
             scaled_shape_subdivision: 10,
             force_update_from_transform_changes: true,
         })
-        .add_plugins(RapierDebugRenderPlugin::default())
+        //.add_plugins(RapierDebugRenderPlugin::default())
         .add_plugins(CollisionSystemPlugin)
         .add_plugins(DamageSystemPlugin)
         .add_plugins(AssetLoaderPlugin) //textures etc

@@ -20,7 +20,8 @@ pub struct SceneAssetBundles {
     pub player: SpriteSheetBundle,
     pub enemy: SpriteSheetBundle,
     pub projectile: SpriteSheetBundle,
-    pub wall: SpriteSheetBundle,
+    pub wall: SpriteSheetBundle,   //walls
+    pub object: SpriteSheetBundle, //treee,rocks, etc
 }
 
 pub struct AssetLoaderPlugin;
@@ -95,11 +96,21 @@ fn load_assets(
 
     let layout_wall = TextureAtlasLayout::from_grid(Vec2::new(32., 32.), 2, 1, None, None);
     let tal_wall = texture_atlas_layouts.add(layout_wall);
-
     bundles.wall = SpriteSheetBundle {
         texture: asset_server.load("sprites/tiles.png"),
         atlas: TextureAtlas {
             layout: tal_wall,
+            index: 1,
+        },
+        ..default()
+    };
+
+    let layout_object = TextureAtlasLayout::from_grid(Vec2::new(60., 72.), 11, 1, None, None);
+    let tal_object = texture_atlas_layouts.add(layout_object);
+    bundles.object = SpriteSheetBundle {
+        texture: asset_server.load("sprites/craftpix/trees.png"),
+        atlas: TextureAtlas {
+            layout: tal_object,
             index: 1,
         },
         ..default()

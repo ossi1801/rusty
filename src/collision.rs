@@ -1,4 +1,6 @@
-use bevy::prelude::*;
+use std::thread::spawn;
+
+use bevy::{prelude::*, scene::ron::de};
 use bevy_rapier2d::prelude::*;
 
 use crate::{
@@ -43,14 +45,32 @@ fn spawn_world_collider(mut commands: Commands) {
         .insert(TransformBundle::from(Transform::from_xyz(0.0, 0.0, 0.0))); //left
 }
 
-fn spawn_buildings(mut ev_writer: EventWriter<CreateWallEvent>) {
+fn spawn_buildings(
+    mut ev_writer: EventWriter<CreateWallEvent>,
+    scene_asset_bundles: Res<SceneAssetBundles>,
+) {
     let block_size: f32 = 32.;
     for i in 1..10 {
         ev_writer.send(CreateWallEvent {
             sprite_index: 1,
             collider_size: Vec2::new(block_size / 2., block_size / 2.),
-            position: Vec3::new(100., 500. + (block_size * i as f32), 0.),
+            sprite_position: Vec3::new(100., 500. + (block_size * i as f32), 0.),
+            ..default()
         });
+    }
+
+    //Tree mesh generate test
+    let block_size: f32 = 16.;
+    for i in 1..100 {
+        if i % 10 == 0 {
+            ev_writer.send(CreateWallEvent {
+                sprite_override: Some(scene_asset_bundles.object.clone()),
+                sprite_index: 0,
+                collider_size: Vec2::new(block_size / 2., block_size / 2.),
+                sprite_position: Vec3::new(200., 500. + (block_size * i as f32), 0.),
+                collider_offset: Some(Vec3::new(0., -28., 0.)),
+            });
+        }
     }
 }
 
@@ -119,11 +139,13 @@ fn register_projectile_hits(
     }
 }
 
-#[derive(Event)]
+#[derive(Event, Default)]
 pub struct CreateWallEvent {
     sprite_index: usize,
+    sprite_override: Option<SpriteSheetBundle>,
+    sprite_position: Vec3,
     collider_size: Vec2,
-    position: Vec3,
+    collider_offset: Option<Vec3>,
 }
 
 fn spawn_wall_with_collider(
@@ -132,17 +154,34 @@ fn spawn_wall_with_collider(
     mut ev: EventReader<CreateWallEvent>,
 ) {
     for e in ev.read() {
+        //Create new sprite if overrides else use default
         let mut sprite = scene_asset_bundles.wall.clone();
+        if e.sprite_override.is_some() {
+            sprite = e.sprite_override.clone().expect("sprite_override error");
+        }
         sprite.atlas.index = e.sprite_index;
-        commands
-            .spawn((
-                sprite,
-                Collider::cuboid(e.collider_size.x, e.collider_size.y),
-            ))
+        let parent = commands
+            .spawn(sprite)
             .insert(TransformBundle::from(Transform::from_xyz(
-                e.position.x,
-                e.position.y,
-                e.position.z,
-            ))); //
+                e.sprite_position.x,
+                e.sprite_position.y,
+                e.sprite_position.z,
+            )))
+            .id();
+
+        //Creating collider: You can set the offset by creating a child entity and setting localtransform as offset value
+        let collider = commands
+            .spawn(Collider::cuboid(e.collider_size.x, e.collider_size.y))
+            .id();
+        let mut offset: Vec3 = Vec3::new(0., 0., 0.);
+        if e.collider_offset.is_some() {
+            offset = e.collider_offset.expect("sprite_override error");
+        }
+        commands.entity(collider).insert(TransformBundle {
+            local: Transform::from_xyz(offset.x, offset.y, offset.z),
+            ..default()
+        });
+        //Binding collider with parent
+        commands.entity(parent).push_children(&[collider]);
     }
 }
