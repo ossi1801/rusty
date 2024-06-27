@@ -7,7 +7,7 @@ use std::time::Duration;
 use crate::assets_loader::SceneAssetBundles;
 
 use crate::damage::Health;
-use crate::player::{player_movement, Player, PLAYER_SIZE};
+use crate::player::{player_movement, Player};
 pub struct EnemyPlugin;
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
@@ -44,6 +44,7 @@ pub fn spawn_enemies(
         let animation_indices = AnimationIndices { first: 0, last: 3 };
         scene_asset_bundles.enemy.transform = Transform::from_xyz(random_x, random_y, 0.0);
         //scene_asset_bundles.enemy.sprite.color.set_a(0.7);
+
         commands
             .spawn((
                 scene_asset_bundles.enemy.clone(), //spritesheet
@@ -53,10 +54,6 @@ pub fn spawn_enemies(
                     h: 32.0,
                     speed: 150.,
                     vision_radius: 250.,
-                    // health: Health {
-                    //     hp: 5.,
-                    //     is_dead: false,
-                    // },
                     damage: 5.0,
                     death_anim_timer: Timer::new(Duration::from_millis(700), TimerMode::Once),
                 },
@@ -66,38 +63,51 @@ pub fn spawn_enemies(
                 },
                 animation_indices, //anims
                 AnimationTimer(Timer::from_seconds(0.1, TimerMode::Repeating)), //anims
-                RigidBody::Dynamic,
+                ActiveCollisionTypes::KINEMATIC_STATIC,
+                KinematicCharacterController::default(),
+                Collider::cuboid(8.0, 8.0),
+                Sensor, //moves through player
             ))
-            .insert(Collider::cuboid(8.0, 8.0))
-            .insert(Sensor);
+            .insert(ActiveCollisionTypes::default() | ActiveCollisionTypes::KINEMATIC_STATIC);
+        //ActiveCollisionTypes is used to check between 2 KinematicCharacterControllers (enemy<->player)
+        //KinematicCharacterController also takes care of enemy running into walls ;)
     }
 }
 
 pub fn update_enemy_position(
     mut player_query: Query<(&mut Transform, &mut Player), (With<Player>, Without<Enemy>)>,
-    mut enemy_query: Query<(&mut Transform, &mut Enemy, &Health), (With<Enemy>, Without<Player>)>,
+    mut enemy_query: Query<
+        (
+            &mut Transform,
+            &mut Enemy,
+            &Health,
+            &mut KinematicCharacterController,
+        ),
+        (With<Enemy>, Without<Player>),
+    >,
     time: Res<Time>,
 ) {
     let p = player_query.get_single_mut().expect("player query failed");
     let p_translation: Vec3 = p.0.translation; //.normalize();
-    for (mut t, e, health) in enemy_query.iter_mut() {
+    for (mut t, e, health, mut controller) in enemy_query.iter_mut() {
         if health.is_dead {
             continue; // skip dead enemys
         }
         let tmp: Vec3 = t.translation;
         if is_in_range(&tmp, &p_translation, e.vision_radius) {
             // check if player in range
-            t.translation +=
-                from_to_vec3_normalize(tmp, p_translation) * e.speed * time.delta_seconds();
+            controller.translation =
+                Some(from_to_vec2_normalize(tmp, p_translation) * e.speed * time.delta_seconds());
         } else if is_in_range(&tmp, &e.spawn_location, 30.0) == false {
             // if is not in  home
-            t.translation +=
-                from_to_vec3_normalize(tmp, e.spawn_location) * e.speed * time.delta_seconds();
+            controller.translation = Some(
+                from_to_vec2_normalize(tmp, e.spawn_location) * e.speed * time.delta_seconds(),
+            );
         }
     }
 }
-pub fn from_to_vec3_normalize(from: Vec3, to: Vec3) -> Vec3 {
-    return Vec3::new(to.x - from.x, to.y - from.y, 0.).normalize();
+pub fn from_to_vec2_normalize(from: Vec3, to: Vec3) -> Vec2 {
+    return Vec2::new(to.x - from.x, to.y - from.y).normalize();
 }
 pub fn is_in_range(from: &Vec3, to: &Vec3, range_float: f32) -> bool {
     return ((to.x - from.x).abs() + (to.y - from.y).abs()) < range_float;

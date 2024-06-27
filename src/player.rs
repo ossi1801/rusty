@@ -61,6 +61,7 @@ fn spawn_player(
                 },
             },
             RigidBody::KinematicPositionBased,
+            Sensor,
         ))
         .insert(Collider::cuboid(PLAYER_COLLIDER_SIZE, PLAYER_COLLIDER_SIZE))
         .insert(ActiveEvents::COLLISION_EVENTS)

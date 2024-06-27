@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_rapier2d::prelude::*;
+use bevy_rapier2d::{prelude::*, rapier::geometry::ContactPair};
 use rand::prelude::*;
 
 use crate::{
@@ -104,18 +104,16 @@ fn modify_collider_restitution(mut restitutions: Query<&mut Restitution>) {
 fn register_player_collide_with_enemy(
     time: Res<Time>,
     rapier_context: Res<RapierContext>,
-    mut player_query: Query<(&mut Transform, &mut Player, Entity), (With<Player>, Without<Enemy>)>,
-    mut collision_query: Query<(&Transform, &Enemy, Entity), (With<Sensor>, Without<Player>)>,
+    mut player_query: Query<(&mut Player, Entity), (With<Player>, Without<Enemy>)>,
+    mut collision_query: Query<(&Enemy, Entity), (With<Enemy>, Without<Player>)>,
 ) {
-    if let Ok((mut player_transform, mut player, player_entity)) = player_query.get_single_mut() {
-        for q in collision_query.iter_mut() {
+    if let Ok((mut player, player_entity)) = player_query.get_single_mut() {
+        for (enemy, enemy_entity) in collision_query.iter_mut() {
             /* Find the intersection pair, if it exists, between two colliders. */
-            if rapier_context.intersection_pair(player_entity, q.2) == Some(true) {
-                player.hp += -(q.1.damage * time.delta_seconds());
-                // println!(
-                //     "The entities {:?} and {:?} have intersecting colliders!",
-                //     player_entity, q.2
-                // );
+            //if let Some(contact) = rapier_context.contact_pair(player_entity, enemy_entity) { //test wall
+            if rapier_context.intersection_pair(player_entity, enemy_entity) == Some(true) {
+                info!("intersection Colliding");
+                player.hp += -(enemy.damage * time.delta_seconds());
             }
         }
     }
