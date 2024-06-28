@@ -18,6 +18,12 @@ impl Plugin for EnemyPlugin {
     }
 }
 
+#[derive(Component, PartialEq)]
+pub enum ColliderFlag {
+    Enemy,
+    Player,
+    Other,
+}
 #[derive(Component)]
 pub struct Enemy {
     spawn_location: Vec3,
@@ -28,6 +34,7 @@ pub struct Enemy {
     //pub health: Health,
     pub damage: f32,             //todo damge comp
     pub death_anim_timer: Timer, //Death animation timer
+    pub collider_flag: ColliderFlag,
 }
 
 pub const NUMBER_OF_ENEMIES: usize = 16;
@@ -56,6 +63,7 @@ pub fn spawn_enemies(
                     vision_radius: 250.,
                     damage: 5.0,
                     death_anim_timer: Timer::new(Duration::from_millis(700), TimerMode::Once),
+                    collider_flag: ColliderFlag::Enemy,
                 },
                 Health {
                     hp: 5.,
@@ -82,72 +90,37 @@ pub fn update_enemy_position(
             &mut Enemy,
             &Health,
             &mut KinematicCharacterController,
+            Entity,
         ),
         (With<Enemy>, Without<Player>),
     >,
     time: Res<Time>,
     rapier_context: Res<RapierContext>,
-    mut wall_check_query: Query<
-        (&mut Transform),
-        (With<Collider>, Without<Enemy>, Without<Player>),
-    >,
+    //custom_data_query: Query<&ColliderFlag>,
 ) {
     let p = player_query.get_single_mut().expect("player query failed");
     let p_translation: Vec3 = p.0.translation; //.normalize();
-    for (mut t, e, health, mut controller) in enemy_query.iter_mut() {
+    for (mut t, e, health, mut controller, enemy_entity) in enemy_query.iter_mut() {
         if health.is_dead {
             continue; // skip dead enemys
         }
         let tmp: Vec3 = t.translation;
 
         //Check if player in range
-        if is_in_range(&tmp, &p_translation, e.vision_radius) {
-            let enemy_pos: Vec2 = Vec2::new(tmp.x, tmp.y);
-            let player_pos: Vec2 = Vec2::new(p_translation.x, p_translation.y);
-            // rapier_context.intersections_with_ray(
-            //     enemy_pos,
-            //     player_pos,
-            //     e.vision_radius,
-            //     true,
-            //     QueryFilter::default(),
-            //     |entity, intersection| {
-            //         // Callback called on each collider hit by the ray.
-            //         let hit_point = intersection.point;
-            //         let hit_normal = intersection.normal;
-
-            //         if let Ok(mut hitpoint) = wall_check_query.get_mut(entity) {
-            //             println!("hit wall");
-            //             false
-            //         } else if let Ok(mut hitpoint) = player_query.get_mut(entity) {
-            //             println!("hit player");
-            //             controller.translation = Some(
-            //                 from_to_vec2_normalize(tmp, p_translation)
-            //                     * e.speed
-            //                     * time.delta_seconds(),
-            //             );
-            //             false
-            //         } else {
-            //             true
-            //         } // Return `false` instead if we want to stop searching for other hits.
-            //     },
-            // );
-
-            //get offset so ray does not hit enemy char or create filter?
-            let offset = 50.;
-            if let Some((entity, toi)) = rapier_context.cast_ray(
-                enemy_pos + offset,
-                player_pos,
-                e.vision_radius,
-                true,
-                QueryFilter::default(),
-            ) {
-                let hit_point = enemy_pos + player_pos * toi;
-                if let Ok(mut hitpoint) = player_query.get_mut(entity) {
-                    println!("Entity {:?} hit at point {}", entity, hit_point);
-                    controller.translation = Some(
-                        from_to_vec2_normalize(tmp, p_translation) * e.speed * time.delta_seconds(),
-                    );
-                }
+        //if is_in_range(&tmp, &p_translation, e.vision_radius) {
+        let enemy_pos: Vec2 = Vec2::new(tmp.x, tmp.y);
+        //let player_pos: Vec2 = Vec2::new(p_translation.x, p_translation.y);
+        if let Some((entity, _)) = rapier_context.cast_ray(
+            enemy_pos,
+            from_to_vec2_normalize(tmp, p_translation),
+            e.vision_radius,
+            true,
+            QueryFilter::new().exclude_collider(enemy_entity),
+        ) {
+            if let Ok(_) = player_query.get_mut(entity) {
+                controller.translation = Some(
+                    from_to_vec2_normalize(tmp, p_translation) * e.speed * time.delta_seconds(),
+                );
             }
         } else if is_in_range(&tmp, &e.spawn_location, 30.0) == false {
             // if is not in  home
