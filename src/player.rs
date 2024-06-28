@@ -1,6 +1,7 @@
 use std::time::Duration;
 
-use crate::assets_loader::{SceneAssetBundles, SceneAssets, SceneAssetsAtlas};
+use crate::assets_loader::SceneAssetBundles;
+use crate::enemy::*;
 use crate::weapon::Weapon;
 use bevy::prelude::*;
 use bevy::sprite::*;
@@ -60,6 +61,7 @@ fn spawn_player(
                     sensor: Sensor,
                 },
             },
+            //ColliderFlagHolder(ColliderFlag::Player),
             RigidBody::KinematicPositionBased,
             Sensor,
         ))

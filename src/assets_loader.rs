@@ -1,5 +1,5 @@
-use crate::player::PLAYER_SIZE;
-use bevy::prelude::*;
+use crate::{player::PLAYER_SIZE, tiles::TILE_SIZE};
+use bevy::{prelude::*, sprite::*};
 
 #[derive(Resource, Debug, Default)]
 pub struct SceneAssets {
@@ -22,6 +22,9 @@ pub struct SceneAssetBundles {
     pub projectile: SpriteSheetBundle,
     pub wall: SpriteSheetBundle,   //walls
     pub object: SpriteSheetBundle, //treee,rocks, etc
+    pub tile: SpriteSheetBundle,
+
+    pub debug_tile: SpriteSheetBundle, //MaterialMesh2dBundle<ColorMaterial>,
 }
 
 pub struct AssetLoaderPlugin;
@@ -38,9 +41,11 @@ impl Plugin for AssetLoaderPlugin {
 fn load_assets(
     mut scene_assets: ResMut<SceneAssets>,
     asset_server: Res<AssetServer>,
+    mut bundles: ResMut<SceneAssetBundles>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    //mut materials: ResMut<Assets<ColorMaterial>>,
     mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     mut h_atlas: ResMut<SceneAssetsAtlas>,
-    mut bundles: ResMut<SceneAssetBundles>,
 ) {
     *scene_assets = SceneAssets {
         player: asset_server.load("sprites/spritesheet.png"),
@@ -93,7 +98,9 @@ fn load_assets(
         },
         ..default()
     };
+    //---------------
 
+    //Walls-----------
     let layout_wall = TextureAtlasLayout::from_grid(Vec2::new(32., 32.), 2, 1, None, None);
     let tal_wall = texture_atlas_layouts.add(layout_wall);
     bundles.wall = SpriteSheetBundle {
@@ -104,7 +111,9 @@ fn load_assets(
         },
         ..default()
     };
+    //--------
 
+    //Trees ---------
     let layout_object = TextureAtlasLayout::from_grid(Vec2::new(60., 72.), 11, 1, None, None);
     let tal_object = texture_atlas_layouts.add(layout_object);
     bundles.object = SpriteSheetBundle {
@@ -115,4 +124,37 @@ fn load_assets(
         },
         ..default()
     };
+    //--------------
+
+    //Tile --------------
+    let layout = TextureAtlasLayout::from_grid(Vec2::new(TILE_SIZE, TILE_SIZE), 1, 1, None, None);
+    let texture_atlas_layout = texture_atlas_layouts.add(layout);
+    bundles.tile = SpriteSheetBundle {
+        texture: asset_server.load("sprites/green.PNG"), //default
+        atlas: TextureAtlas {
+            index: 0,
+            layout: texture_atlas_layout,
+        },
+        ..default()
+    };
+    //-----------------
+
+    //Debug tile ------------
+    let layout = TextureAtlasLayout::from_grid(Vec2::new(TILE_SIZE, TILE_SIZE), 2, 1, None, None);
+    let texture_atlas_layout = texture_atlas_layouts.add(layout);
+    bundles.debug_tile = SpriteSheetBundle {
+        texture: asset_server.load("sprites/debug.png"), //default
+        atlas: TextureAtlas {
+            index: 0,
+            layout: texture_atlas_layout,
+        },
+        //visibility: Visibility::Hidden,
+        ..default()
+    };
+    // meshbundle.transform = Transform::from_xyz(0., 0., 0.0).with_translation(Vec3 {
+    //     x: 0.,
+    //     y: 0.,
+    //     z: 1.,
+    // });
+    //---------------
 }

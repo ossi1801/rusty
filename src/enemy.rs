@@ -18,12 +18,17 @@ impl Plugin for EnemyPlugin {
     }
 }
 
-#[derive(Component, PartialEq)]
-pub enum ColliderFlag {
-    Enemy,
-    Player,
-    Other,
-}
+// #[derive(Component, PartialEq)]
+// pub enum ColliderFlag {
+//     Enemy,
+//     Player,
+//     Other,
+// }
+// #[derive(Component, PartialEq)]
+// pub struct ColliderFlagHolder(pub ColliderFlag);
+#[derive(Component)]
+pub struct EnemyCollider {}
+
 #[derive(Component)]
 pub struct Enemy {
     spawn_location: Vec3,
@@ -34,7 +39,6 @@ pub struct Enemy {
     //pub health: Health,
     pub damage: f32,             //todo damge comp
     pub death_anim_timer: Timer, //Death animation timer
-    pub collider_flag: ColliderFlag,
 }
 
 pub const NUMBER_OF_ENEMIES: usize = 16;
@@ -63,8 +67,8 @@ pub fn spawn_enemies(
                     vision_radius: 250.,
                     damage: 5.0,
                     death_anim_timer: Timer::new(Duration::from_millis(700), TimerMode::Once),
-                    collider_flag: ColliderFlag::Enemy,
                 },
+                //ColliderFlagHolder(ColliderFlag::Enemy),
                 Health {
                     hp: 5.,
                     is_dead: false,
@@ -75,6 +79,7 @@ pub fn spawn_enemies(
                 KinematicCharacterController::default(),
                 Collider::cuboid(8.0, 8.0),
                 Sensor, //moves through player
+                EnemyCollider {},
             ))
             .insert(ActiveCollisionTypes::default() | ActiveCollisionTypes::KINEMATIC_STATIC);
         //ActiveCollisionTypes is used to check between 2 KinematicCharacterControllers (enemy<->player)
@@ -96,7 +101,7 @@ pub fn update_enemy_position(
     >,
     time: Res<Time>,
     rapier_context: Res<RapierContext>,
-    //custom_data_query: Query<&ColliderFlag>,
+    enemy_collider_flag_query: Query<&EnemyCollider>,
 ) {
     let p = player_query.get_single_mut().expect("player query failed");
     let p_translation: Vec3 = p.0.translation; //.normalize();
@@ -109,24 +114,37 @@ pub fn update_enemy_position(
         //Check if player in range
         //if is_in_range(&tmp, &p_translation, e.vision_radius) {
         let enemy_pos: Vec2 = Vec2::new(tmp.x, tmp.y);
-        //let player_pos: Vec2 = Vec2::new(p_translation.x, p_translation.y);
+        let predicate = |entity| {
+            let mut b: bool = true;
+            if let Ok(_) = enemy_collider_flag_query.get(entity) {
+                b = false;
+            }
+            b
+            // custom_data_query
+            //     .get(handle)
+            //     .(|custom_data| custom_data.0 != ColliderFlag::Enemy)
+        };
         if let Some((entity, _)) = rapier_context.cast_ray(
             enemy_pos,
             from_to_vec2_normalize(tmp, p_translation),
             e.vision_radius,
             true,
-            QueryFilter::new().exclude_collider(enemy_entity),
+            QueryFilter::new()
+                .exclude_collider(enemy_entity)
+                .predicate(&predicate),
         ) {
             if let Ok(_) = player_query.get_mut(entity) {
+                //info!("what");
                 controller.translation = Some(
                     from_to_vec2_normalize(tmp, p_translation) * e.speed * time.delta_seconds(),
                 );
+            } else if is_in_range(&tmp, &e.spawn_location, 30.0) == false {
+                // info!("imnothome");
+                // if is not in  home
+                controller.translation = Some(
+                    from_to_vec2_normalize(tmp, e.spawn_location) * e.speed * time.delta_seconds(),
+                );
             }
-        } else if is_in_range(&tmp, &e.spawn_location, 30.0) == false {
-            // if is not in  home
-            controller.translation = Some(
-                from_to_vec2_normalize(tmp, e.spawn_location) * e.speed * time.delta_seconds(),
-            );
         }
     }
 }

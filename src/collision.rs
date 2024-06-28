@@ -1,9 +1,10 @@
 use bevy::prelude::*;
-use bevy_rapier2d::{prelude::*, rapier::geometry::ContactPair};
+use bevy_rapier2d::prelude::*;
 use rand::prelude::*;
 
 use crate::{
-    assets_loader::SceneAssetBundles, damage::*, enemy::Enemy, player::Player, PlayerProjecttile,
+    assets_loader::SceneAssetBundles, damage::*, enemy::*, player::Player, tiles::*,
+    PlayerProjecttile,
 };
 
 pub struct CollisionSystemPlugin;
@@ -47,13 +48,20 @@ fn spawn_world_collider(mut commands: Commands) {
 fn spawn_buildings(
     mut ev_writer: EventWriter<CreateWallEvent>,
     scene_asset_bundles: Res<SceneAssetBundles>,
+    mut tile_query: Query<&mut Tiles>,
 ) {
-    let block_size: f32 = 32.;
+    //let block_size: f32 = 32.;
     for i in 1..10 {
+        let wall_position = Vec2::new(TILE_SIZE * 4., TILE_SIZE * 10. + (TILE_SIZE * i as f32));
+        for mut tiles in tile_query.iter_mut() {
+            if tiles.tile_position == wall_position {
+                tiles.tile_walkable = false;
+            }
+        }
         ev_writer.send(CreateWallEvent {
             sprite_index: 1,
-            collider_size: Vec2::new(block_size / 2., block_size / 2.),
-            sprite_position: Vec3::new(100., 500. + (block_size * i as f32), 0.),
+            collider_size: Vec2::new(TILE_SIZE / 2., TILE_SIZE / 2.),
+            sprite_position: Vec3::new(wall_position.x, wall_position.y, 0.),
             ..default()
         });
     }
@@ -62,8 +70,8 @@ fn spawn_buildings(
 
     let tree_size_x: f32 = 60.;
     let tree_size_y: f32 = 74.;
-    for i in 1..100 {
-        for k in 1..100 {
+    for i in 0..100 {
+        for k in 0..100 {
             let rnd = rand::thread_rng().gen_range(0..1000);
             if rnd % 20 == 0 {
                 ev_writer.send(CreateWallEvent {
@@ -178,6 +186,7 @@ fn spawn_wall_with_collider(
         //Creating collider: You can set the offset by creating a child entity and setting localtransform as offset value
         let collider = commands
             .spawn(Collider::cuboid(e.collider_size.x, e.collider_size.y))
+            // .insert(ColliderFlagHolder(ColliderFlag::Other))
             .id();
         let mut offset: Vec3 = Vec3::new(0., 0., 0.);
         if e.collider_offset.is_some() {
